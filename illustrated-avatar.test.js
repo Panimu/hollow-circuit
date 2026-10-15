@@ -23,7 +23,7 @@ test('all 120 appearance combinations render finite geometry with independent SV
  assert.equal(count,120);
 });
 test('equipment methods render and random fittings never overlap or need unsupported poses',()=>{
- assert.equal(A.catalog.length,23);
+ assert.equal(A.catalog.length,56);
  for(const item of A.catalog)for(const [methodId] of F.methodsFor(item)){const c=A.equip(A.defaults()[0],item.id,methodId);assert.match(A.render(c),new RegExp(`data-item="${item.id}"`));}
  for(let n=0;n<200;n++){const e=A.randomEquipment();assert.equal(e.length,3);assert.deepEqual(F.sanitize(e),e);const covered=e.flatMap(x=>F.getItem(x.itemId).slots);assert.equal(new Set(covered).size,covered.length);assert.ok(e.every(x=>A.catalog.some(i=>i.id===x.itemId)));}
 });
@@ -42,7 +42,7 @@ test('old arm bands migrate safely, supported methods retain ratings, generated 
  for(const outfit of Object.keys(A.options.outfit))for(const item of F.catalog){
   const e={itemId:item.id,methodId:F.methodsFor(item)[0][0]},v={...A.defaults()[0],outfit,restraints:[e]},svg=A.render(v);
   assert.doesNotMatch(svg,/(rope|leather|steel)-band.png/);assert.match(svg,new RegExp(`data-family="${item.family}"`));
-  const effects=F.profile(e.itemId,e.methodId).effects;if(item.family!=='silence')assert.deepEqual(effects,R.profile(e.itemId,e.methodId).effects);
+  const effects=F.profile(e.itemId,e.methodId).effects;if(R.getItem(item.id))assert.deepEqual(effects,R.profile(e.itemId,e.methodId).effects);
  }
 });
 test('rear equipment is occluded by the body; front faces have independent clip paths',()=>{

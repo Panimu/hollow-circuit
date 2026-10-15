@@ -2,20 +2,22 @@
 const FittedEquipment = (() => {
   const R=typeof RestraintSystem!=='undefined'?RestraintSystem:require('./restraints');
   const S=typeof Spellcasting!=='undefined'?Spellcasting:require('./spellcasting');
-  const methods={...R.methods,...S.methods};
+  const E=typeof DungeonEquipment!=='undefined'?DungeonEquipment:require('./dungeon-equipment');
+  const methods={...R.methods,...S.methods,...E.methods};
   const slots=['wrists','ankles','upper-leg','lower-leg','waist','chest'];
   const familyNames={wrists:'wrist cuffs',ankles:'ankle restraints','upper-leg':'thigh straps','lower-leg':'calf sleeves',waist:'waist belt',chest:'torso harness'};
   const catalog=R.catalog.filter(i=>i.slots.length===1&&slots.includes(i.slot)).map(i=>({...i,name:`${i.material} ${familyNames[i.slot]}`,family:i.slot}));
   catalog.push({...R.getItem('leather-arm-sleeve'),name:'Monoglove armbinder',family:'armbinder',slots:['shoulders','chest','arms','elbows','wrists','hands','fingers'],description:'A single shaped sleeve encloses both arms and hands behind the back, supported by a shoulder harness.'});
   catalog.push({...R.getItem('leather-boot-wrap'),name:'Cinched leg sheath',family:'sheaths',slots:['upper-leg','knees','lower-leg','ankles','feet','toes'],description:'A joined casing and shared straps hold both legs together from upper thighs to enclosed feet.'});
-  catalog.push(...S.catalog);
+  catalog.push(...S.catalog,...E.catalog);
   const getItem=id=>catalog.find(i=>i.id===id);
-  const methodsFor=item=>item?.family==='silence'?Object.entries(S.methods):R.methodsFor(item);
+  const methodsFor=item=>item?.family==='silence'?Object.entries(S.methods):item?.family==='gear'?Object.entries(E.methods):R.methodsFor(item);
   function profile(id,methodId){
     const item=getItem(id);if(!item)return null;
-    if(item.family==='silence'){
-      if(!Object.hasOwn(S.methods,methodId))return null;
-      const method=S.methods[methodId],effects=Object.fromEntries(Object.keys(R.attributes).map(k=>[k,(item.effects[k]||0)+(method.effects[k]||0)]));
+    if(['silence','gear'].includes(item.family)){
+      const supported=item.family==='silence'?S.methods:E.methods;
+      if(!Object.hasOwn(supported,methodId))return null;
+      const method=supported[methodId],effects=Object.fromEntries(Object.keys(R.attributes).map(k=>[k,(item.effects[k]||0)+(method.effects[k]||0)]));
       return {item,method,difficulty:item.difficulty+method.difficulty,escape:item.escape+method.escape,cost:item.cost+method.cost,effects};
     }
     const p=R.profile(id,methodId);return p?{...p,item}:null;
@@ -78,6 +80,7 @@ const FittedEquipment = (() => {
   function render(entry,c,depth='front',prefix='equipment'){
     const item=getItem(entry.itemId);if(!item)return '';
     if(item.family==='silence')return S.render(item,depth,prefix);
+    if(item.family==='gear')return E.render(item,c,depth,prefix);
     const material=item.material.toLowerCase(),swim=c.outfit==='swimsuit',family=item.family;
     const front=depth==='front',key=`${prefix}-${item.id}-${depth}`;
     let art='';
@@ -118,8 +121,9 @@ const FittedEquipment = (() => {
     }
     return `<g data-item="${item.id}" data-equipment-depth="front" data-family="${family}">${connector}<g filter="url(#${prefix}-contact)">${art}</g>${hardware}</g>`;
   }
-  function detail(entry){
+  function detail(entry,prefix='inspect'){
     const item=getItem(entry?.itemId);if(!item)return '';
+    if(item.family==='gear')return E.detail(item,prefix);
     if(item.family==='armbinder')return `<img src="${path('monoglove-v2')}" alt="Back of the monoglove: one tapered sleeve, closed hand pocket, shoulder suspension and three fastening straps."><p>Rear equipment detail. The sleeve sits behind the character; its suspension straps are visible from the front.</p>`;
     if(item.family==='sheaths')return `<img src="${path('cinched-leg-sheath-v3')}" alt="Joined leg sheath with shared straps holding thighs, knees and ankles together."><p>A continuous sheath cinches both legs together, including the knees, ankles and enclosed feet.</p>`;
     return '';

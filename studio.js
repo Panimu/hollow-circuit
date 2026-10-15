@@ -5,6 +5,7 @@
   try {const saved=JSON.parse(localStorage.getItem(key));if(saved?.version===1 && Array.isArray(saved.roster)) roster=roster.map((_,i)=>A.sanitize(saved.roster[i],i));} catch {}
   const names=['Nova','Vesper'],details=[false,false];
   const selection=[{item:'rope-wrists',method:'knot'},{item:'leather-ankles',method:'buckle'}];
+  const filters=['all','all'];
   const status=document.querySelector('#status'),root=document.querySelector('#characters');
   const option=(value,label,current)=>`<option value="${value}"${value===current?' selected':''}>${label}</option>`;
   function card(i) {
@@ -14,11 +15,20 @@
     card.querySelector('.badge').textContent='FITTED EQUIPMENT';
     card.querySelector('.stage').insertAdjacentHTML('beforeend',`<button class="rear-inset" id="rear-inset-${i}" data-action="inspect" data-index="${i}" hidden><img src="${F.path('monoglove-v2')}" alt="Rear of the fitted armbinder"><span>REAR ITEM VIEW ↗</span></button>`);
     for(const opt of card.querySelectorAll(`#item-${i} option`))opt.textContent=F.getItem(opt.value).name;
+    card.querySelector('.fit-row').insertAdjacentHTML('beforebegin',`<div class="slot-browser"><label>Browse equipment slot<select id="slot-filter-${i}" data-slot-filter="${i}" aria-label="${names[i]} equipment slot"><option value="all">All slots · ${F.catalog.length} designs</option>${R.slotDefinitions.map(slot=>option(slot.id,`${slot.label} · ${F.catalog.filter(item=>item.slots.includes(slot.id)).length} options`,'all')).join('')}</select></label><p id="slot-count-${i}">${R.slots.length} equipment slots · At least 3 dedicated options each.</p></div>`);
     card.querySelector('.rating').insertAdjacentHTML('beforebegin',`<p class="coverage" id="coverage-${i}"></p>`);
     card.querySelector('.fit-button').insertAdjacentHTML('afterend',`<div class="equipment-detail" id="equipment-detail-${i}"></div>`);
     card.querySelector('.editor').insertAdjacentHTML('beforeend',`<section class="casting" aria-labelledby="casting-title-${i}"><h3 id="casting-title-${i}">03 / Spellcasting check</h3><p class="casting-state" id="casting-state-${i}" role="status"></p><div class="silence-presets" aria-label="${names[i]} silence equipment">${S.catalog.map(item=>`<button data-preset="${item.id}" data-index="${i}" aria-pressed="false">${item.name}</button>`).join('')}</div><label>Spell<select id="spell-${i}" aria-label="${names[i]} spell">${S.spells.map(spell=>option(spell.id,`${spell.name} · ${spell.verbal?'spoken':'nonverbal'}`,'ember-word')).join('')}</select></label><button data-action="cast" data-index="${i}">Check selected spell</button><p class="cast-result" id="cast-result-${i}" role="status"></p><p class="helper">Free rules preview. Silence blocks spoken spells until the item is removed; nonverbal spells remain available. No damage, AP or combat turn is resolved here.</p></section>`);
     card.querySelector('.helper').textContent='Fitting replaces every overlapping item. The armbinder moves both arms behind the back. The leg sheath cinches both legs together, including knees and feet. Outfits are cosmetic; no AP is spent here. Save to keep both characters on this browser.';
-    methods(i);paint(i);
+    choices(i);paint(i);
+  }
+  function choices(i){
+    const items=F.catalog.filter(item=>filters[i]==='all'||item.slots.includes(filters[i]));
+    if(!items.some(item=>item.id===selection[i].item))selection[i].item=items[0].id;
+    document.querySelector(`#slot-filter-${i}`).value=filters[i];
+    document.querySelector(`#item-${i}`).innerHTML=items.map(item=>option(item.id,item.name,selection[i].item)).join('');
+    document.querySelector(`#slot-count-${i}`).textContent=filters[i]==='all'?`${R.slots.length} equipment slots · At least 3 dedicated options each.`:`${items.length} designs covering ${R.getSlot(filters[i]).label.toLowerCase()}. Multi-slot pieces replace overlapping equipment.`;
+    methods(i);
   }
   function methods(i) {
     const methods=F.methodsFor(F.getItem(selection[i].item));
@@ -27,12 +37,12 @@
   }
   function rating(i) {
     const p=F.profile(selection[i].item,selection[i].method);
-    const silence=p.item.family==='silence';
-    document.querySelector(`#coverage-${i}`).textContent=`Covers: ${p.item.slots.map(s=>R.getSlot(s).label).join(', ')}.${silence?' '+p.item.description+' Blocks all spoken spells.':''}`;
-    document.querySelector(`#method-${i}`).parentElement.firstChild.textContent=silence?'Rune activation':'Securing method';
-    const detail=document.querySelector(`#equipment-detail-${i}`),markup=F.detail({itemId:selection[i].item});
+    const silence=p.item.family==='silence',gear=p.item.family==='gear';
+    document.querySelector(`#coverage-${i}`).textContent=`Covers: ${p.item.slots.map(s=>R.getSlot(s).label).join(', ')}. ${p.item.description}${silence?' Blocks all spoken spells.':''}`;
+    document.querySelector(`#method-${i}`).parentElement.firstChild.textContent=silence?'Rune activation':gear?'Module setup':'Securing method';
+    const detail=document.querySelector(`#equipment-detail-${i}`),markup=F.detail({itemId:selection[i].item},'inspect'+i);
     detail.hidden=!markup;detail.innerHTML=markup?`<details><summary>Inspect ${p.item.name.toLowerCase()}</summary>${markup}</details>`:'';
-    document.querySelector(`#rating-${i}`).textContent=`Application difficulty ${p.difficulty} · ${silence?'Dispel':'Escape'} difficulty ${p.escape} · ${p.cost} AP ${silence?'design rating':'in simulation'}. ${Object.entries(p.effects).filter(([,v])=>v).map(([k,v])=>`${R.attributes[k]} −${v}%`).join(' · ')}`;
+    document.querySelector(`#rating-${i}`).textContent=`Application difficulty ${p.difficulty} · ${silence?'Dispel':gear?'Removal':'Escape'} difficulty ${p.escape} · ${p.cost} AP ${silence||gear?'design rating':'in simulation'}. ${Object.entries(p.effects).filter(([,v])=>v).map(([k,v])=>`${R.attributes[k]} −${v}%`).join(' · ')}`;
   }
   function paint(i) {
     document.querySelector(`#art-${i}`).innerHTML=A.render(roster[i],i,details[i]);
@@ -53,6 +63,7 @@
   root.addEventListener('change',event=>{
     const el=event.target;
     if(el.id.startsWith('spell-'))document.querySelector(`#cast-result-${el.id.slice(6)}`).textContent='';
+    if(el.dataset.slotFilter!==undefined){const i=Number(el.dataset.slotFilter);filters[i]=el.value;choices(i);}
     if(el.dataset.look){const i=Number(el.dataset.index);roster[i][el.dataset.look]=el.value;paint(i);status.textContent=`${names[i]} updated. Save both characters to keep this look.`;}
     if(el.dataset.item!==undefined){const i=Number(el.dataset.item);selection[i].item=el.value;methods(i);}
     if(el.dataset.method!==undefined){const i=Number(el.dataset.method);selection[i].method=el.value;rating(i);}
@@ -60,13 +71,13 @@
   root.addEventListener('click',event=>{
     const el=event.target.closest('button');if(!el)return;const i=Number(el.dataset.index);
     if(el.dataset.remove){roster[i].restraints=roster[i].restraints.filter(e=>e.itemId!==el.dataset.remove);paint(i);document.querySelector(`#character-${i} [data-action="fit"]`).focus();}
-    if(el.dataset.preset){selection[i]={item:el.dataset.preset,method:'buckle'};document.querySelector(`#item-${i}`).value=el.dataset.preset;methods(i);roster[i]=A.equip(roster[i],el.dataset.preset,selection[i].method);paint(i);}
+    if(el.dataset.preset){selection[i]={item:el.dataset.preset,method:'buckle'};filters[i]='all';choices(i);roster[i]=A.equip(roster[i],el.dataset.preset,selection[i].method);paint(i);}
     switch(el.dataset.action){
       case 'cast':{
         const result=S.check(roster[i],document.querySelector(`#spell-${i}`).value),output=document.querySelector(`#cast-result-${i}`);
         output.textContent=result.reason;output.dataset.allowed=String(result.allowed);return;
       }
-      case 'inspect':selection[i].item='leather-arm-sleeve';selection[i].method=roster[i].restraints.find(e=>e.itemId==='leather-arm-sleeve')?.methodId||'buckle';document.querySelector(`#item-${i}`).value=selection[i].item;methods(i);document.querySelector(`#equipment-detail-${i} details`).open=true;document.querySelector(`#equipment-detail-${i}`).scrollIntoView({behavior:'smooth',block:'center'});return;
+      case 'inspect':selection[i].item='leather-arm-sleeve';selection[i].method=roster[i].restraints.find(e=>e.itemId==='leather-arm-sleeve')?.methodId||'buckle';filters[i]='all';choices(i);document.querySelector(`#equipment-detail-${i} details`).open=true;document.querySelector(`#equipment-detail-${i}`).scrollIntoView({behavior:'smooth',block:'center'});return;
       case 'zoom':details[i]=!details[i];el.setAttribute('aria-pressed',String(details[i]));el.textContent=details[i]?'Full figure':'Face & torso';paint(i);return;
       case 'equipment':roster[i].restraints=A.randomEquipment();paint(i);break;
       case 'clear':roster[i].restraints=[];paint(i);break;

@@ -2,9 +2,17 @@
 
 Open `index.html` in a browser, or run `python -m http.server 8080` and visit http://localhost:8080. No build or dependencies are required. GitHub Pages publishes `main`; asset URLs are versioned with each release.
 
-## Illustrated studio (0.10)
+## Illustrated studio (0.11)
 
-Three arcane silence items are available in the equipment menu and each character's **Spellcasting check** panel: Whisper seal (mouth), Echo filter (mouth), and Null voice visor (mouth + face). These are floating magical projections rendered as SVG effects. Their distinct application/dispel ratings and focus penalties are design values; attuning or reinforcing a rune changes these ratings. The studio now offers 23 designs in total.
+The studio now has **56 designs across all 18 equipment slots**, with at least three dedicated options per slot (not counting whole-body coverage toward this minimum). **Browse equipment slot** filters by every location an item covers. Quick-fit shortcuts reset the filter so their selected item remains visible. Selecting a new item shows its description, coverage, method ratings and penalties before fitting.
+
+`dungeon-equipment.js` adds 33 nonsexual armor/simulator modules: three dedicated silhouettes each for toes, feet, knees, shoulders, arms, elbows, hands, fingers, neck, face and head. Composite pieces use curved pads/plates, alloy pieces use articulated plates, and prism pieces use angular projections/sensors. Each of the 33 has separately authored SVG geometry, dimensional shading, slot-specific placement and an inspectable detail view. Pairs render on both sides; feet/toes and upper arms/elbows remain independently equipable. The front-docked modules do not use wrapping straps. Other slot designs and silence equipment remain available.
+
+Docking uses the base rating; calibration adds 10 application difficulty, 15 removal difficulty, 1 nominal AP and 3 focus penalty. Every design has its own slot-dependent effects and variant ratings. Ratings are preview values; fitting is free. Saved setups retain the selected module and method. Multi-slot replacement remains atomic, and ordinary face/head/neck modules do not silence spoken spells. Pelvic clothing zones in the older lab are not equipment slots in this studio.
+
+Run `node --test restraints.test.js illustrated-avatar.test.js spellcasting.test.js dungeon-equipment.test.js`. With Playwright/Edge available, `node equipment.browser.test.cjs` checks all slot filters, every new design, all three outfits, save/reload, overlapping voice-visor replacement, independent avatars and mobile layout. It supports the same `STUDIO_TEST_URL` override as `studio.browser.test.cjs`.
+
+Three arcane silence items are available in the equipment menu and each character's **Spellcasting check** panel: Whisper seal (mouth), Echo filter (mouth), and Null voice visor (mouth + face). These are floating magical projections rendered as SVG effects. Their distinct application/dispel ratings and focus penalties are design values; attuning or reinforcing a rune changes these ratings.
 
 `spellcasting.js` checks whether a spell needs a spoken incantation. An active silence item blocks Ember word and Ward chant completely, independently of the Communication percentage; Focus pulse is nonverbal and remains available. Removing silence restores casting eligibility immediately. Equipped runes and activation methods survive saving/reloading. The **Check selected spell** button exercises this rule without spending AP, dealing damage or advancing combat. These new items are studio-only; the older simulation lab is unchanged. Run `node --test restraints.test.js illustrated-avatar.test.js spellcasting.test.js` to include the casting checks.
 

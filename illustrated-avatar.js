@@ -8,7 +8,7 @@ const IllustratedAvatar = (() => {
     hair: { midnight:'Midnight', chestnut:'Chestnut', silver:'Silver', copper:'Copper', violet:'Violet' },
     outfit: { streetwear:'Streetwear', swimsuit:'Athletic swimsuit', catsuit:'Latex catsuit' }
   };
-  const slots = ['wrists','ankles','upper-leg','lower-leg','waist','chest'];
+  const slots = [...R.slots];
   const catalog = F.catalog;
   const defaults = () => [
     {skin:'porcelain',style:'bob',hair:'midnight',outfit:'streetwear',restraints:[]},
@@ -48,7 +48,8 @@ const IllustratedAvatar = (() => {
     const hairTransform=c.style==='bob'?'translate(213 4) scale(.58)':'translate(239 4) scale(.53 .43)';
     const garment=swim||behind?'':pic(c.outfit,`transform="${c.outfit==='streetwear'?'translate(51 99) scale(.90 .93)':'translate(25 119) scale(.93 .92)'}"`);
     const order={sheaths:0,'lower-leg':1,'upper-leg':2,ankles:3,waist:4,chest:5,armbinder:6,wrists:7,silence:8};
-    const frontEntries=[...c.restraints].sort((a,b)=>order[F.getItem(a.itemId).family]-order[F.getItem(b.itemId).family]);
+    const depth=item=>item.family==='gear'?({feet:0.2,toes:0.3,knees:1.5,shoulders:5.5,arms:5.6,elbows:5.7,hands:7.1,fingers:7.2,neck:7.3,head:7.4,face:7.5}[item.slot]):order[item.family];
+    const frontEntries=[...c.restraints].sort((a,b)=>depth(F.getItem(a.itemId))-depth(F.getItem(b.itemId)));
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${detail?'220 0 590 870':'155 0 730 1518'}" role="img" aria-labelledby="${id}-title"><title id="${id}-title">${index===1?'Vesper':'Nova'}, adult age 20, ${options.outfit[c.outfit]}, ${options.style[c.style]}, ${options.skin[c.skin]} skin, ${options.hair[c.hair]} hair. ${c.restraints.length} equipment pieces. Front ${behind?'arms behind':'standing'} view${sheaths?', legs cinched together':''}.</title><defs>
       <clipPath id="${id}-parts">${head}${swim||behind?'':hands}</clipPath><clipPath id="${id}-swim">${swimClip}</clipPath>
       <clipPath id="${id}-posebody"><path d="M455 233H565V260H1036V1518H0V260H455Z"/></clipPath>
