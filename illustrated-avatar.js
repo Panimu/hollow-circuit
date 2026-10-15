@@ -12,13 +12,14 @@ const IllustratedAvatar = (() => {
   const slots = [...R.slots];
   const catalog = F.catalog;
   const defaults = () => [
-    {skin:'porcelain',style:'bob',hair:'midnight',outfit:'streetwear',restraints:[]},
-    {skin:'bronze',style:'ponytail',hair:'chestnut',outfit:'catsuit',restraints:[]}
+    {skin:'porcelain',style:'bob',hair:'midnight',outfit:'streetwear',visorRaised:false,restraints:[]},
+    {skin:'bronze',style:'ponytail',hair:'chestnut',outfit:'catsuit',visorRaised:false,restraints:[]}
   ];
   function sanitize(value, index=0) {
     const result=defaults()[index === 1 ? 1 : 0];
     if (!value || typeof value !== 'object') return result;
     for(const key of Object.keys(options)) if(Object.hasOwn(options[key],value[key])) result[key]=value[key];
+    result.visorRaised=value.visorRaised===true;
     result.restraints=F.sanitize(value.restraints);
     return result;
   }

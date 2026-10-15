@@ -22,11 +22,23 @@ const H=require('./head-equipment');
    await page.locator('#character-0 [data-action="cast"]').click();
    assert.match(await page.locator('#cast-result-0').innerText(),item.blocksVerbal?/blocked/:/passes/);
    await page.locator('#character-0 .stage').screenshot({path:`test-results/${item.id}.png`});
+   const visor=page.locator('#character-0 [data-action="visor"]');
+   assert.equal(await visor.isDisabled(),item.kind!=='helmet');
+   if(item.kind==='helmet'){
+    await visor.click();assert.equal(await page.locator('#art-0 [data-visor="raised"]').count(),1);
+    await page.locator('#character-0 [data-action="cast"]').click();
+    assert.match(await page.locator('#cast-result-0').innerText(),item.blocksVerbal?/blocked/:/passes/);
+    await page.locator('#character-0 .stage').screenshot({path:`test-results/${item.id}-raised.png`});
+    await visor.click();assert.equal(await page.locator('#art-0 [data-visor="lowered"]').count(),1);
+   }
   }
   await page.locator('#character-0 [data-preset="head-sentinel-helmet"]').click();
+  await page.locator('#character-0 [data-action="visor"]').click();
   await page.locator('#save').click();await page.reload();
   await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Ready.'));
   assert.equal(await page.locator('#art-0 [data-avatar-hair]').count(),0);
+  assert.equal(await page.locator('#art-0 [data-visor="raised"]').count(),1);
+  assert.equal(await page.locator('#character-0 [data-action="visor"]').innerText(),'Lower visor');
   assert.equal(await page.getByLabel('Nova style',{exact:true}).inputValue(),'ponytail');
   await page.locator('#character-0 [data-action="cast"]').click();assert.match(await page.locator('#cast-result-0').innerText(),/blocked/);
   await page.locator('#character-0 [data-remove="head-sentinel-helmet"]').click();
@@ -40,7 +52,13 @@ const H=require('./head-equipment');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await page.locator('#character-0 [data-action="headzoom"]').click();
   assert.equal(await page.locator('#art-0>svg').getAttribute('viewBox'),'155 0 730 1518');
+  await page.locator('#character-1 [data-preset="head-sentinel-helmet"]').click();
+  await page.locator('#character-1 [data-action="headzoom"]').click();
+  await page.locator('#character-1 [data-action="visor"]').click();
+  assert.equal(await page.locator('#art-1 [data-visor="raised"]').count(),1);
+  assert.equal(await page.locator('#character-0 [data-action="visor"]').isDisabled(),true);
+  await page.locator('#character-1 .stage').screenshot({path:'test-results/opponent-helmet-raised-mobile.png'});
   assert.deepEqual(errors,[]);
-  console.log('PASS: 9 headgear designs, coverage replacement, casting gates, hair concealment/restoration, save/reload, head close-up, independent avatars and mobile layout.');
+  console.log('PASS: 9 headgear designs, visor lift/lower and persistence, coverage replacement, casting gates, hair concealment/restoration, save/reload, head close-up, independent avatars and mobile layout.');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

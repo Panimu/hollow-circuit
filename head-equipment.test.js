@@ -45,3 +45,15 @@ test('new items have distinct geometry, valid methods and unique IDs across avat
  }
  assert.equal(new Set(shapes).size,9);
 });
+test('visor position persists per character without changing coverage, penalties or spell rules',()=>{
+ for(const item of H.catalog.filter(i=>i.kind==='helmet')){
+  const down=A.equip(A.defaults()[0],item.id,'mount'),up={...down,visorRaised:true};
+  assert.match(A.render(down),/data-visor="lowered"/);assert.match(A.render(up),/data-visor="raised"/);
+  assert.deepEqual(F.penalties(up),F.penalties(down));
+  assert.deepEqual(S.check(up,'ember-word'),S.check(down,'ember-word'));
+  assert.deepEqual(A.sanitize(JSON.parse(JSON.stringify(up))),up);
+  assert.equal(A.defaults()[1].visorRaised,false);
+ }
+ for(const value of ['true','false',1,{},null])assert.equal(A.sanitize({visorRaised:value}).visorRaised,false);
+ assert.equal(A.sanitize({skin:'sand'}).visorRaised,false,'old saves default to a lowered visor');
+});

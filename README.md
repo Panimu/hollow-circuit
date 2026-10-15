@@ -2,7 +2,9 @@
 
 Open `index.html` in a browser, or run `python -m http.server 8080` and visit http://localhost:8080. No build or dependencies are required. GitHub Pages publishes `main`; asset URLs are versioned with each release.
 
-## Illustrated studio (0.12)
+## Illustrated studio (0.13)
+
+The three fabric masks now use a closer cheek/jaw silhouette, contoured nose shading, subtle weave and shaped seams. The three protective helmets have stitched leather trim and separate hinged optical visors. **Lift visor / Lower visor** appears beneath each avatar and becomes available when a helmet is fitted. Its position is saved independently for each character; older saves default to lowered. Visor position is a visual preview and does not change slot coverage, penalties or spell-ward behavior. The equipment count remains 65; existing saved item IDs are retained.
 
 Nine headgear designs bring the studio to **65 equipment designs**. The **Headgear** shortcuts beneath each avatar fit a ward helmet, fabric mask or resonance faceplate; **Head close-up** zooms into the face and toggles back to the full figure. All variants are available through the Head and Mouth slot filters.
 

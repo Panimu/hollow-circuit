@@ -15,6 +15,7 @@
     card.querySelector('.badge').textContent='FITTED EQUIPMENT';
     card.querySelector('.quick-fit').insertAdjacentHTML('afterend',`<div class="quick-fit head-fit" aria-label="${names[i]} headgear fittings"><span>HEADGEAR</span>${[['head-sentinel-helmet','Ward helmet'],['head-scout-mask','Fabric mask'],['head-resonance-plate','Faceplate']].map(([id,label])=>`<button data-preset="${id}" data-index="${i}" aria-pressed="false">${label}</button>`).join('')}</div>`);
     card.querySelector('.head-fit').insertAdjacentHTML('beforeend',`<button data-action="headzoom" data-index="${i}" aria-pressed="false">Head close-up</button>`);
+    card.querySelector('.head-fit').insertAdjacentHTML('beforeend',`<button data-action="visor" data-index="${i}" aria-pressed="false" disabled>Lift visor</button>`);
     card.querySelector('.stage').insertAdjacentHTML('beforeend',`<button class="rear-inset" id="rear-inset-${i}" data-action="inspect" data-index="${i}" hidden><img src="${F.path('monoglove-v2')}" alt="Rear of the fitted armbinder"><span>REAR ITEM VIEW ↗</span></button>`);
     for(const opt of card.querySelectorAll(`#item-${i} option`))opt.textContent=F.getItem(opt.value).name;
     card.querySelector('.fit-row').insertAdjacentHTML('beforebegin',`<div class="slot-browser"><label>Browse equipment slot<select id="slot-filter-${i}" data-slot-filter="${i}" aria-label="${names[i]} equipment slot"><option value="all">All slots · ${F.catalog.length} designs</option>${R.slotDefinitions.map(slot=>option(slot.id,`${slot.label} · ${F.catalog.filter(item=>item.slots.includes(slot.id)).length} options`,'all')).join('')}</select></label><p id="slot-count-${i}">${R.slots.length} equipment slots · At least 3 dedicated options each.</p></div>`);
@@ -51,6 +52,8 @@
     const zoom=document.querySelector(`#character-${i} [data-action="zoom"]`);
     zoom.setAttribute('aria-pressed',String(Boolean(details[i])));zoom.textContent=details[i]?'Full figure':'Face & torso';
     document.querySelector(`#character-${i} [data-action="headzoom"]`).setAttribute('aria-pressed',String(details[i]==='head'));
+    const helmet=roster[i].restraints.some(e=>F.getItem(e.itemId).kind==='helmet'),visor=document.querySelector(`#character-${i} [data-action="visor"]`);
+    visor.disabled=!helmet;visor.setAttribute('aria-pressed',String(helmet&&roster[i].visorRaised));visor.textContent=helmet&&roster[i].visorRaised?'Lower visor':'Lift visor';visor.title=helmet?'Preview visor position; spell effects stay active.':'Fit a helmet to use its hinged visor.';
     const behind=roster[i].restraints.some(e=>F.getItem(e.itemId).family==='armbinder');
     document.querySelector(`#rear-inset-${i}`).hidden=!behind||details[i];
     const cinched=roster[i].restraints.some(e=>F.getItem(e.itemId).family==='sheaths');
@@ -78,6 +81,7 @@
     if(el.dataset.remove){roster[i].restraints=roster[i].restraints.filter(e=>e.itemId!==el.dataset.remove);paint(i);document.querySelector(`#character-${i} [data-action="fit"]`).focus();}
     if(el.dataset.preset){selection[i]={item:el.dataset.preset,method:'buckle'};filters[i]='all';choices(i);roster[i]=A.equip(roster[i],el.dataset.preset,selection[i].method);paint(i);}
     switch(el.dataset.action){
+      case 'visor':if(roster[i].restraints.some(e=>F.getItem(e.itemId).kind==='helmet')){roster[i].visorRaised=!roster[i].visorRaised;paint(i);}break;
       case 'headzoom':details[i]=details[i]==='head'?false:'head';paint(i);return;
       case 'cast':{
         const result=S.check(roster[i],document.querySelector(`#spell-${i}`).value),output=document.querySelector(`#cast-result-${i}`);
