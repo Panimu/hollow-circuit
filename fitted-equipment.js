@@ -4,6 +4,7 @@ const FittedEquipment = (() => {
   const S=typeof Spellcasting!=='undefined'?Spellcasting:require('./spellcasting');
   const E=typeof DungeonEquipment!=='undefined'?DungeonEquipment:require('./dungeon-equipment');
   const H=typeof HeadEquipment!=='undefined'?HeadEquipment:require('./head-equipment');
+  const G=typeof GeneratedEquipment!=='undefined'?GeneratedEquipment:require('./generated-equipment');
   const methods={...R.methods,...S.methods,...E.methods,...H.methods};
   const slots=['wrists','ankles','upper-leg','lower-leg','waist','chest'];
   const familyNames={wrists:'wrist cuffs',ankles:'ankle restraints','upper-leg':'thigh straps','lower-leg':'calf sleeves',waist:'waist belt',chest:'torso harness'};
@@ -11,6 +12,12 @@ const FittedEquipment = (() => {
   catalog.push({...R.getItem('leather-arm-sleeve'),name:'Monoglove armbinder',family:'armbinder',slots:['shoulders','chest','arms','elbows','wrists','hands','fingers'],description:'A single shaped sleeve encloses both arms and hands behind the back, supported by a shoulder harness.'});
   catalog.push({...R.getItem('leather-boot-wrap'),name:'Cinched leg sheath',family:'sheaths',slots:['upper-leg','knees','lower-leg','ankles','feet','toes'],description:'A joined casing and shared straps hold both legs together from upper thighs to enclosed feet.'});
   catalog.push(...S.catalog,...E.catalog,...H.catalog);
+  for(const item of catalog){
+    if(['upper-leg','lower-leg'].includes(item.family)){
+      item.name=`${item.material==='Rope'?'Woven':item.material} ${item.family==='upper-leg'?'thigh guards':'shin guards'}`;
+      item.description=item.family==='upper-leg'?'Paired contoured upper-thigh panels with shaped edges and padded backing.':'Paired anatomical shin guards taper from the calf to the ankle.';
+    }
+  }
   const getItem=id=>catalog.find(i=>i.id===id);
   const methodsFor=item=>item?.family==='silence'?Object.entries(S.methods):item?.family==='gear'?Object.entries(E.methods):item?.family==='headgear'?Object.entries(H.methods):R.methodsFor(item);
   function profile(id,methodId){
@@ -49,7 +56,7 @@ const FittedEquipment = (() => {
     const first=pick(catalog.filter(i=>i.family===major));result=equip(result,first.id,pick(methodsFor(first))[0]);
     while(result.length<3){const choices=catalog.filter(i=>!result.some(e=>getItem(e.itemId).slots.some(s=>i.slots.includes(s))));if(!choices.length)break;const item=pick(choices);result=equip(result,item.id,pick(methodsFor(item))[0]);}return result;
   }
-  const assets=['rope-fittings-v2','leather-fittings-v2','steel-fittings-v2','monoglove-v2','cinched-leg-sheath-v3','behind-streetwear-v2','behind-catsuit-v2','behind-swimsuit-v2'];
+  const assets=['rope-fittings-v2','leather-fittings-v2','steel-fittings-v2','monoglove-v2','cinched-leg-sheath-v3','behind-streetwear-v2','behind-catsuit-v2','behind-swimsuit-v2',...G.assets];
   const path=name=>`assets/illustrated/${name}.png`;
   // Atlas crop bounds are calibrated from each generated transparent sheet.
   const atlas={
@@ -80,6 +87,7 @@ const FittedEquipment = (() => {
   }
   function render(entry,c,depth='front',prefix='equipment'){
     const item=getItem(entry.itemId);if(!item)return '';
+    if(G.supports(item.id))return G.render(item,c,depth,prefix);
     if(item.family==='silence')return S.render(item,depth,prefix);
     if(item.family==='gear')return E.render(item,c,depth,prefix);
     if(item.family==='headgear')return H.render(entry,c,depth,prefix);
@@ -125,6 +133,7 @@ const FittedEquipment = (() => {
   }
   function detail(entry,prefix='inspect'){
     const item=getItem(entry?.itemId);if(!item)return '';
+    if(G.supports(item.id))return G.detail(item);
     if(item.family==='gear')return E.detail(item,prefix);
     if(item.family==='headgear')return H.detail(item,prefix);
     if(item.family==='armbinder')return `<img src="${path('monoglove-v2')}" alt="Back of the monoglove: one tapered sleeve, closed hand pocket, shoulder suspension and three fastening straps."><p>Rear equipment detail. The sleeve sits behind the character; its suspension straps are visible from the front.</p>`;

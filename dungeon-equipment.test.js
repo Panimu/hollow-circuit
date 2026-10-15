@@ -14,8 +14,8 @@ test('all 18 slots have three dedicated designs, without relying on multi-slot g
     assert.ok(dedicated.length>=3,slot);
     assert.equal(new Set(dedicated.map(i=>i.name)).size,dedicated.length);
   }
-  const shapes=E.catalog.map(i=>E.shape(i.slot,i.variant));
-  assert.equal(new Set(shapes).size,33,'33 different silhouettes, not recolors');
+  const shapes=E.catalog.filter(i=>!['hands','knees'].includes(i.slot)).map(i=>E.shape(i.slot,i.variant));
+  assert.equal(new Set(shapes).size,27,'27 remaining procedural silhouettes; hands and knees use generated art');
 });
 test('each new design replaces its slot, restores from saves, and affects the intended stats',()=>{
   for(const item of E.catalog){

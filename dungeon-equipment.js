@@ -1,5 +1,6 @@
 /* Slot-specific armor and simulator modules. Geometry is authored per slot/variant. */
 const DungeonEquipment = (() => {
+  const G=typeof GeneratedEquipment!=='undefined'?GeneratedEquipment:require('./generated-equipment');
   const methods={
     dock:{name:'Dock module',difficulty:0,escape:0,cost:0,effects:{}},
     calibrate:{name:'Calibrate module',difficulty:10,escape:15,cost:1,effects:{focus:3}}
@@ -11,7 +12,7 @@ const DungeonEquipment = (() => {
     ['shoulders',['Scout shoulder caps','Layered pauldrons','Prism shoulder fins'],['Compact caps follow the shoulder curve.','Overlapping armor plates extend across each shoulder.','Twin fins project a simulator interference field.'],{dexterity:8,recovery:5},36,30],
     ['arms',['Scout arm plates','Ridge rerebraces','Vector arm modules'],['Tapered upper-arm plates leave elbows free.','Segmented upper-arm shells track the sleeve contour.','Angular modules add simulated arm-action latency.'],{dexterity:12,recovery:5},34,28],
     ['elbows',['Scout elbow pads','Winged couters','Pivot elbow modules'],['Oval pads sit on the elbow joints.','Winged plates leave the upper arms and wrists free.','Circular pivot modules add precision-action interference.'],{dexterity:10,evasion:5},32,26],
-    ['hands',['Scout hand shields','Knuckle plates','Prism palm modules'],['Small shields protect the backs of the hands.','Segmented plates cover the knuckles without covering fingers.','Floating diamonds track hand gestures and add action latency.'],{dexterity:14,focus:3},30,22],
+    ['hands',['Scout hand shields','Knuckle plates','Prism hand plates'],['Contoured composite plates follow the backs of the hands.','Overlapping metal plates cover the knuckles without covering fingers.','Shaped hand armor with inset crystals adds gesture latency.'],{dexterity:14,focus:3},30,22],
     ['fingers',['Digit sensor tabs','Articulated digit plates','Rune fingertip nodes'],['Individual narrow tabs track finger motion.','Separate joint plates follow each visible finger.','Small rune nodes interfere with fine gesture timing.'],{dexterity:12,focus:4},38,20],
     ['neck',['Scout gorget','Split plate gorget','Prism throat ward'],['A shallow armor plate rests at the base of the neck.','Two sculpted plates guard the sides of the throat.','A hovering ward adds concentration interference; it does not silence spells.'],{focus:8,recovery:3},34,28],
     ['face',['Scout eye visor','Split lens visor','Prism targeting visor'],['A narrow translucent visor spans the eyes.','Two separate lenses add targeting interference.','An angular projection disrupts visual targeting; spoken spells remain available.'],{focus:14,evasion:6},40,32],
@@ -37,11 +38,6 @@ const DungeonEquipment = (() => {
         P('M28 3H72L78 28Q50 42 22 28Z M22 30Q50 19 78 30L84 57Q50 74 16 57Z M16 60Q50 45 84 60L92 85Q50 105 8 85Z'),
         P('M50 0L75 18L88 76L50 100L12 76L25 18Z')+L('M50 10V89M25 30L50 48L75 30M20 65L50 82L80 65')
       ][v];
-      case 'knees':return [
-        P('M15 16Q50 -3 85 16Q105 50 85 84Q50 103 15 84Q-5 50 15 16Z')+L('M26 25Q50 12 74 25M26 75Q50 88 74 75'),
-        P('M20 0H80L92 25L50 37L8 25Z M8 32L50 20L92 32L95 62L50 80L5 62Z M10 70L50 57L90 70L80 100H20Z'),
-        P('M50 0L90 19L100 55L72 96H28L0 55L10 19Z')+L('M50 12L80 47L50 83L20 47Z M10 19L20 47L0 55M90 19L80 47L100 55')
-      ][v];
       case 'shoulders':return [
         P('M5 36Q25 0 68 9Q91 19 98 60L75 82L12 70Z')+L('M15 38Q39 13 70 24'),
         P('M5 24Q40 -5 76 16L94 43L76 59L8 47Z M8 48L76 38L100 65L77 84L14 72Z M15 73L77 65L94 89L73 100L21 91Z'),
@@ -56,11 +52,6 @@ const DungeonEquipment = (() => {
         '<ellipse cx="50" cy="50" rx="36" ry="44"/>'+L('M31 20Q50 8 69 20M31 80Q50 92 69 80'),
         P('M50 6L78 28L100 44L81 65L50 94L19 65L0 44L22 28Z')+L('M22 28L50 50L78 28M19 65L50 50L81 65'),
         P('M24 6H76L94 30V70L76 94H24L6 70V30Z')+'<circle cx="50" cy="50" r="28"/><circle cx="50" cy="50" r="13" class="node"/>'
-      ][v];
-      case 'hands':return [
-        P('M18 10Q50 -2 82 10L74 67L50 85L26 67Z')+L('M28 21L35 60L50 71L65 60L72 21'),
-        P('M13 6H87L83 30H17Z M17 34H83L77 57L50 73L23 57Z')+L('M31 6V30M50 6V30M69 6V30M50 34V65'),
-        P('M50 1L83 28L74 62L50 86L26 62L17 28Z')+L('M50 12L68 39L50 66L32 39Z')+'<circle cx="50" cy="39" r="6" class="node"/>'
       ][v];
       case 'fingers':return Array.from({length:4},(_,n)=>{
         const x=13+n*21,y=[16,0,7,27][n];
@@ -85,6 +76,7 @@ const DungeonEquipment = (() => {
     }
   }
   function targets(slot,c){
+    if(['hands','knees'].includes(slot))return G.targets(slot,c);
     const swim=c.outfit==='swimsuit';
     return {
       toes:swim?[[379,1437,77,45],[561,1437,77,45]]:[[364,1435,108,43],[550,1435,108,43]],
@@ -99,6 +91,7 @@ const DungeonEquipment = (() => {
     }[slot];
   }
   function render(item,c,depth='front',prefix='gear'){
+    if(G.supports(item.id))return G.render(item,c,depth,prefix);
     const places=targets(item.slot,c),v=item.variant,key=`${prefix}-${item.id}-${depth}`;
     const palette=[['#b9c1c9','#424f5d','#202a35','#a6d5d2'],['#ebdcc4','#7b7168','#33353b','#e6bf7b'],['#c7e5f9','#466782','#172c49','#8eeaff']][v];
     const defs=`<defs><linearGradient id="${key}-metal" x1="0" y1="0" x2="1" y2=".6"><stop stop-color="${palette[0]}"/><stop offset=".38" stop-color="${palette[1]}"/><stop offset=".7" stop-color="${palette[2]}"/><stop offset="1" stop-color="${palette[1]}"/></linearGradient><filter id="${key}-shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.3" flood-color="#18202b" flood-opacity=".4"/></filter><clipPath id="${key}"><rect x="-3" y="-3" width="106" height="109"/></clipPath></defs>`;
@@ -110,6 +103,7 @@ const DungeonEquipment = (() => {
     return `<g ${depth==='front'?`data-item="${item.id}"`:''} data-equipment-depth="${depth}" data-family="gear" data-slot="${item.slot}" fill="${depth==='front'?`url(#${key}-metal)`:'#283441'}" ${item.slot==='face'?'fill-opacity=".52"':''} stroke="${palette[2]}" stroke-width="1.6" stroke-linejoin="round">${defs}<style>#${key}-art .seam{stroke:${palette[0]};stroke-width:1.3;opacity:.85}#${key}-art .node{fill:${palette[3]}}</style><g id="${key}-art">${art}</g></g>`;
   }
   function detail(item,instance='inspect'){
+    if(G.supports(item.id))return G.detail(item);
     const c={outfit:'streetwear'},places=targets(item.slot,c),[x,y,w,h]=places[0],prefix=instance+'-'+item.id;
     return `<svg class="gear-detail" viewBox="${x-10} ${y-10} ${w+20} ${h+20}" role="img" aria-label="${item.name} shape detail">${render(item,c,'front',prefix)}</svg><p>${item.description} ${places.length===2?'One side shown; the equipped pair fits both sides.':'Single central module.'} Front-docked plates and projections follow this slot's shape.</p>`;
   }

@@ -11,7 +11,8 @@
   function card(i) {
     root.insertAdjacentHTML('beforeend',`<article class="character" id="character-${i}" aria-labelledby="name-${i}"><div class="card-head"><div><p>${i?'OPPONENT':'PLAYER'} / ADULT · 20</p><h2 id="name-${i}">${names[i]}</h2></div><span class="badge">ILLUSTRATED</span></div><div class="stage"><div class="art" id="art-${i}" style="width:100%;height:100%"></div><span class="stage-label">FRONT / STANDING</span><button class="zoom" data-action="zoom" data-index="${i}" aria-pressed="false">Face & torso</button></div><div class="preview-actions"><button data-action="equipment" data-index="${i}">↻ Random restraints</button><button data-action="clear" data-index="${i}">Clear</button></div><div class="editor"><fieldset><legend>01 / Appearance</legend><div class="controls">${Object.entries(A.options).map(([k,opts])=>`<label>${{skin:'Skin tone',style:'Hair style',hair:'Hair colour',outfit:'Outfit'}[k]}<select aria-label="${names[i]} ${k}" data-look="${k}" data-index="${i}">${Object.entries(opts).map(([v,l])=>option(v,l,roster[i][k])).join('')}</select></label>`).join('')}</div><div class="small-actions"><button data-action="look" data-index="${i}">Random look</button><button data-action="reset" data-index="${i}">Reset character</button></div></fieldset><details open><summary>02 / Equipment fitting</summary><div class="fit-row"><label>Equipment<select id="item-${i}" data-item="${i}">${A.catalog.map(item=>option(item.id,`${item.material} · ${R.getSlot(item.slot).label}`,selection[i].item)).join('')}</select></label><label>Securing method<select id="method-${i}" data-method="${i}"></select></label><label>Preview mode<select disabled aria-label="Fitting mode"><option>Free fitting</option></select></label></div><p class="rating" id="rating-${i}"></p><button class="fit-button" data-action="fit" data-index="${i}">Fit selected equipment</button><ul class="equipped" id="equipped-${i}"></ul><div class="stats" id="stats-${i}"></div><p class="helper">Fitting replaces the same location. Ratings use the existing rules; no AP is spent here. Outfits are cosmetic in this studio. Save to keep both characters on this browser.</p></details></div></article>`);
     const card=document.querySelector(`#character-${i}`);
-    card.querySelector('.preview-actions').insertAdjacentHTML('afterend',`<div class="quick-fit" aria-label="${names[i]} quick fittings"><span>TRY A FIT</span>${[['leather-arm-sleeve','Armbinder'],['leather-upper-leg','Thigh straps'],['leather-boot-wrap','Leg sheath']].map(([id,label])=>`<button data-preset="${id}" data-index="${i}" aria-pressed="false">${label}</button>`).join('')}</div>`);
+    card.querySelector('.preview-actions').insertAdjacentHTML('afterend',`<div class="quick-fit" aria-label="${names[i]} quick fittings"><span>TRY A FIT</span>${[['leather-arm-sleeve','Armbinder'],['leather-upper-leg','Thigh guards'],['leather-boot-wrap','Leg sheath']].map(([id,label])=>`<button data-preset="${id}" data-index="${i}" aria-pressed="false">${label}</button>`).join('')}</div>`);
+    card.querySelector('.quick-fit').insertAdjacentHTML('beforeend',`<button data-action="gearzoom" data-index="${i}" aria-pressed="false">Legs & hands close-up</button>`);
     card.querySelector('.badge').textContent='FITTED EQUIPMENT';
     card.querySelector('.quick-fit').insertAdjacentHTML('afterend',`<div class="quick-fit head-fit" aria-label="${names[i]} headgear fittings"><span>HEADGEAR</span>${[['head-sentinel-helmet','Ward helmet'],['head-scout-mask','Fabric mask'],['head-resonance-plate','Faceplate']].map(([id,label])=>`<button data-preset="${id}" data-index="${i}" aria-pressed="false">${label}</button>`).join('')}</div>`);
     card.querySelector('.head-fit').insertAdjacentHTML('beforeend',`<button data-action="headzoom" data-index="${i}" aria-pressed="false">Head close-up</button>`);
@@ -49,6 +50,7 @@
   }
   function paint(i) {
     document.querySelector(`#art-${i}`).innerHTML=A.render(roster[i],i,details[i]);
+    document.querySelector(`#character-${i} [data-action="gearzoom"]`).setAttribute('aria-pressed',String(details[i]==='equipment'));
     const zoom=document.querySelector(`#character-${i} [data-action="zoom"]`);
     zoom.setAttribute('aria-pressed',String(Boolean(details[i])));zoom.textContent=details[i]?'Full figure':'Face & torso';
     document.querySelector(`#character-${i} [data-action="headzoom"]`).setAttribute('aria-pressed',String(details[i]==='head'));
@@ -82,6 +84,7 @@
     if(el.dataset.preset){selection[i]={item:el.dataset.preset,method:'buckle'};filters[i]='all';choices(i);roster[i]=A.equip(roster[i],el.dataset.preset,selection[i].method);paint(i);}
     switch(el.dataset.action){
       case 'visor':if(roster[i].restraints.some(e=>F.getItem(e.itemId).kind==='helmet')){roster[i].visorRaised=!roster[i].visorRaised;paint(i);}break;
+      case 'gearzoom':details[i]=details[i]==='equipment'?false:'equipment';paint(i);return;
       case 'headzoom':details[i]=details[i]==='head'?false:'head';paint(i);return;
       case 'cast':{
         const result=S.check(roster[i],document.querySelector(`#spell-${i}`).value),output=document.querySelector(`#cast-result-${i}`);

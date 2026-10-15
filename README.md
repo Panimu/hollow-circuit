@@ -2,7 +2,11 @@
 
 Open `index.html` in a browser, or run `python -m http.server 8080` and visit http://localhost:8080. No build or dependencies are required. GitHub Pages publishes `main`; asset URLs are versioned with each release.
 
-## Illustrated studio (0.13)
+## Illustrated studio (0.14)
+
+Twelve new transparent PNG pairs replace the hand, knee, thigh and shin artwork, with three options for each region. Built-in image generation produced all twelve sources; exact prompts and the style-reference role are recorded in `assets/illustrated/generated-equipment-v1-prompts.json`. Files are `hands-{scout,alloy,prism}-v1.png`, `knees-{scout,alloy,prism}-v1.png`, `thighs-{woven,leather,steel}-v1.png` and `shins-{woven,leather,steel}-v1.png` under `assets/illustrated/`. The woven thigh variant is now a shaped fabric guard. `generated-equipment.js` crops and places the unmodified source images and separates front surfaces from rear edges for body occlusion. Existing item IDs, ratings and saved loadouts remain compatible. **Legs & hands close-up** makes the fittings easier to inspect on mobile.
+
+Run `node --test generated-equipment.test.js` for source/crop validation and renderer/save checks. `node generated-equipment.browser.test.cjs` checks all twelve pairs across all three outfits, detail images, save/reload, independent characters, mobile layout and asset loading; it also accepts `STUDIO_TEST_URL`.
 
 The three fabric masks now use a closer cheek/jaw silhouette, contoured nose shading, subtle weave and shaped seams. The three protective helmets have stitched leather trim and separate hinged optical visors. **Lift visor / Lower visor** appears beneath each avatar and becomes available when a helmet is fitted. Its position is saved independently for each character; older saves default to lowered. Visor position is a visual preview and does not change slot coverage, penalties or spell-ward behavior. The equipment count remains 65; existing saved item IDs are retained.
 
@@ -16,7 +20,7 @@ Run `node --test restraints.test.js illustrated-avatar.test.js spellcasting.test
 
 All 18 equipment slots have at least three dedicated options (not counting whole-body coverage toward this minimum). **Browse equipment slot** filters by every location an item covers. Quick-fit shortcuts reset the filter so their selected item remains visible. Selecting a new item shows its description, coverage, method ratings and penalties before fitting.
 
-`dungeon-equipment.js` adds 33 armor/simulator modules: three dedicated silhouettes each for toes, feet, knees, shoulders, arms, elbows, hands, fingers, neck, face and head. Composite pieces use curved pads/plates, alloy pieces use articulated plates, and prism pieces use angular projections/sensors. Each of the 33 has separately authored SVG geometry, dimensional shading, slot-specific placement and an inspectable detail view. Pairs render on both sides; feet/toes and upper arms/elbows remain independently equipable. The front-docked modules do not use wrapping straps. Other slot designs and silence equipment remain available.
+`dungeon-equipment.js` adds 33 armor/simulator modules: three dedicated silhouettes each for toes, feet, knees, shoulders, arms, elbows, hands, fingers, neck, face and head. Composite pieces use curved pads/plates, alloy pieces use articulated plates, and prism pieces use angular projections/sensors. Hands and knees use generated PNG artwork; the other 27 modules retain separately authored SVG geometry. All have slot-specific placement and an inspectable detail view. Pairs render on both sides; feet/toes and upper arms/elbows remain independently equipable. The front-docked modules do not use wrapping straps. Other slot designs and silence equipment remain available.
 
 Docking uses the base rating; calibration adds 10 application difficulty, 15 removal difficulty, 1 nominal AP and 3 focus penalty. Every design has its own slot-dependent effects and variant ratings. Ratings are preview values; fitting is free. Saved setups retain the selected module and method. Multi-slot replacement remains atomic, and ordinary face/head/neck modules do not silence spoken spells. Pelvic clothing zones in the older lab are not equipment slots in this studio.
 
