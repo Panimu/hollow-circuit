@@ -1,17 +1,39 @@
 # Hollow Circuit — Character Lab
 
-Open `index.html` in a browser. No build or dependencies are required. Optional web server: `python -m http.server 8080` from this folder, then visit http://localhost:8080.
+Open `index.html` in a browser, or run `python -m http.server 8080` and visit http://localhost:8080. No build or dependencies are required. GitHub Pages publishes `main`; asset URLs are versioned with each release.
 
-Select Nova or Vesper to independently customize adult avatars. Appearance controls skin, hair and accent color. Equipment controls suit class and armor. Simulation shows restraint penalties. Save roster persists both characters and their equipped restraints in browser local storage; randomization affects only the selected character's appearance. Older saved wrist/ankle/stasis previews migrate to the new equipment system.
+## Avatars and poses
 
-The restraint lab includes 54 items: 18 each of rope, leather, and steel. Slots cover toes, feet, ankles, lower leg, knees, upper leg, waist, chest, shoulders, arms, elbows, wrists, hands, fingers, neck, face, mouth, and head. Paired slots cover both sides; each slot accepts one item. Body-region and slot filters narrow the catalog; empty loadout slots have a Browse equipment shortcut. Each has application and escape difficulty, AP cost, and multiple penalties. Knot, tightening, buckle, padlock, latch, and double lock modify those ratings; only compatible methods appear. All ratings are fictional simulator mechanics.
+Nova and Vesper are adult avatars with independent appearance, equipment, clothing, and pose settings. `avatar.js` draws an articulated SVG figure with shared joint anchors for limbs, clothing, and restraint layers. The renderer supports front/rear views, standing, legs together, arms behind, kneeling, and kneeling with arms behind. In Automatic mode, boot assemblies bring legs together, arm sleeves place arms behind, and training frames set a supported kneeling pose. Kneeling takes precedence over leg positioning; arm and leg constraints combine. Manual pose controls are visual previews and do not change stats. Rear views expose equipment hidden behind the torso and rear clothing panels.
 
-Select a target; the other avatar acts as the applying character. Each attempt rolls 1–100 against the displayed chance. Both success and failure consume the listed AP. Escapes cost 2 AP. Refill AP restores the shared six-point trial budget without changing loadouts. Release controls are free lab overrides. Trial conditions, AP and the six-event log reset on reload.
+## Clothing
 
-Application chance: `clamp(round(100 - difficulty + conditionBonus - actorDexterityPenalty * 0.4 - actorFocusPenalty * 0.2), 5, 95)`. Alert has no bonus; distracted adds 15; staggered adds 30. Escape chance: `clamp(round(100 - escapeDifficulty - targetDexterityPenalty * 0.25 - targetFocusPenalty * 0.15), 5, 90)`. Penalties add across slots and cap at 85% per attribute. Movement modifies suit speed; dexterity and focus modify checks. Evasion, energy recovery, and communication expose derived performance values for future combat and voice-command abilities; they do not yet drive dodge or regeneration events. Combat turns, elimination, and dungeon exploration are not implemented.
+`wardrobe.js` provides 42 normal garments across 21 clothing zones: the 18 restraint locations plus overall pelvic, front, and rear coverage. Pelvic coverage is clothing-only; no genital restraint mechanics exist. The opaque simulator suit always remains underneath. Each zone offers a reinforced garment and a lightweight trial garment. Wearing a garment replaces clothing in that clothing zone without removing restraints.
 
-`restraints.js` is a standalone rules engine and catalog, usable in browser or Node. `app.js` handles the interface, save migration, and SVG layers: platform, hair-back, body, face, hair-front, outfit, equipment, restraints. All outfits use the same 300 × 450 coordinate system. Restraint overlays use separate material art with lock markers for secured items. Slot metadata defines display labels, body regions, and SVG anchors. Add a slot definition and catalog options to extend the system. Old `*-legs` IDs migrate to `*-lower-leg`; existing appearance and securing methods are preserved. Saves use version 3, while both earlier save formats remain readable.
+Reinforced garments reduce application chance by 6 percentage points on matching coverage and impose a 3% performance penalty. Trial garments increase application chance by 5 points, improve the relevant performance stat by 2%, and add 3% to potential clear rewards. Clothing protection stacks once per garment and caps at ±25 points; reward bonuses cap at +30%. Pelvic coverage affects nearby waist/upper-leg application checks. The wardrobe explicitly lists affected restraint slots. Rewards preview a 100-credit clear; credits are not awarded until dungeon clears are implemented.
 
-Run `node --test restraints.test.js` for deterministic checks of every compatible item/method pair, success/failure boundaries, stacking, slot conflicts, AP costs, escape, migration, and UI save/load integration. No dependencies required.
+## Restraints
+
+`restraints.js` contains 69 items: 23 each of rope, leather, and steel, across toes, feet, ankles, lower leg, knees, upper leg, waist, chest, shoulders, arms, elbows, wrists, hands, fingers, neck, face, mouth, and head. Feet are distinct from toes and ankles. Paired slots cover both sides of the body.
+
+Multi-slot items include boots, arm sleeves, torso rigs, sensor hoods/helmets, and kneeling training frames. The catalog's `slots` array defines all occupied locations; `slot` is only the primary display/sort location. Filters match any covered location. Every covered slot must be free. Conflicts reject application before rolling or spending AP. An equipped item is stored once, applies its modifiers once, and releases all occupied slots on successful escape or lab release. Save validation keeps the first valid item in input order and rejects later overlapping items in full.
+
+Knots, tightening, buckles, padlocks, latches, and double locks modify application difficulty, escape difficulty, action cost, and debuffs. All ratings are fictional simulator mechanics. Head equipment uses simulated focus and communication effects.
+
+## Trial rules
+
+The other avatar attempts application to the selected target. Each roll is 1–100 and succeeds at or below the displayed chance. Both success and failure spend the stated AP. Escape costs 2 AP. The lab shares a six-point budget; Refill AP replenishes it without removing equipment. Release is a free lab override.
+
+Application chance: `clamp(round(100 - difficulty + conditionBonus - actorDexterityPenalty * 0.4 - actorFocusPenalty * 0.2 - targetClothingProtection), 5, 95)`. Alert adds 0; distracted adds 15; staggered adds 30.
+
+Escape chance: `clamp(round(100 - escapeDifficulty - targetDexterityPenalty * 0.25 - targetFocusPenalty * 0.15), 5, 90)`.
+
+Restraint penalties and clothing bonuses combine, capped at an 85% penalty or 20% bonus per attribute. Movement affects suit speed; dexterity and focus affect checks. Evasion, recovery, and communication expose performance values for future combat events. Dungeon exploration, combat turns, elimination, voice-command abilities, and credit awards are not implemented yet.
+
+## Saving and verification
+
+Save roster persists both avatars, clothing, restraints, pose preference and view in browser local storage (schema version 5). Previous saves remain readable; old `*-legs` IDs migrate to `*-lower-leg`. Trial AP, condition, filters, and log reset on reload. Unknown saved values are discarded.
+
+Run `node --test restraints.test.js`. Tests cover all item/method combinations, overlap conflicts, atomic application, costs, escape boundaries, clothing modifiers and caps, save migration, material/slot filters, automatic poses, finite SVG coordinates, front/rear garment layers, and independent avatar state. Browser QA covers desktop/mobile layouts and deployed asset loading.
 
 Artwork is procedural SVG. Google Fonts are optional; system fonts work offline.

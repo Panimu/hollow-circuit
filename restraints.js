@@ -1,5 +1,6 @@
 /* Fictional simulator balance. Percentages are game attributes, not physical guidance. */
 const RestraintSystem = (() => {
+  const Wear=typeof WardrobeSystem!=='undefined'?WardrobeSystem:require('./wardrobe');
   const materials = ['Rope', 'Leather', 'Steel'];
   const slotDefinitions = [
     { id: 'toes', label: 'Toes', region: 'Lower body', pair: [121,179,406], width: 17 },
@@ -70,7 +71,20 @@ const RestraintSystem = (() => {
       difficulty: spec.difficulty + [0,6,16][index], escape: spec.escape + [0,12,26][index], cost: spec.cost + (index === 2 ? 1 : 0),
       effects: Object.fromEntries(Object.entries(spec.effects).map(([key,value],i) => [key, value + (i === 0 ? index * 5 : 0)])), description: spec.description });
   });
-  catalog.sort((a,b) => materials.indexOf(a.material)-materials.indexOf(b.material) || slots.indexOf(a.slot)-slots.indexOf(b.slot));
+  for (const item of catalog) item.slots = [item.slot];
+  const combined = [
+    { key: 'boot-wrap', names: ['Ranger boot lattice','Warden restraint boots','Bastion restraint boots'], slots: ['toes','feet','ankles','lower-leg'], difficulty: 48, escape: 38, cost: 3, effects: { movement: 45, evasion: 25, recovery: 10 }, description: 'One boot assembly covers toes, feet, ankles and lower legs.' },
+    { key: 'arm-sleeve', names: ['Woven arm sleeves','Warden arm sleeves','Sentinel arm assembly'], slots: ['arms','elbows','wrists','hands','fingers'], difficulty: 52, escape: 42, cost: 3, effects: { dexterity: 50, evasion: 15, focus: 10 }, description: 'A connected sleeve controls five arm and hand slots together.' },
+    { key: 'torso-rig', names: ['Woven torso rig','Tracker torso harness','Sentinel torso frame'], slots: ['shoulders','chest','waist'], difficulty: 46, escape: 36, cost: 3, effects: { recovery: 30, evasion: 25, dexterity: 10 }, description: 'A shared torso frame spans the shoulders, chest and waist.' },
+    { key: 'sensor-helmet', names: ['Woven sensor hood','Leather sensor hood','Steel sensor helmet'], slots: ['head','face','neck'], difficulty: 50, escape: 40, cost: 3, effects: { focus: 40, evasion: 20, recovery: 10 }, description: 'A simulator interference assembly covers head, face and neck.' },
+    { key: 'leg-frame', names: ['Woven training frame','Padded training frame','Steel training frame'], slots: ['lower-leg','knees','upper-leg'], difficulty: 54, escape: 44, cost: 3, effects: { movement: 50, evasion: 25, recovery: 10 }, description: 'A simulator training frame sets a supported kneeling pose.' }
+  ];
+  for (const spec of combined) materials.forEach((material,index) => {
+    catalog.push({ id: `${material.toLowerCase()}-${spec.key}`, name: spec.names[index], material, slot: spec.slots[0], slots: [...spec.slots],
+      difficulty: spec.difficulty + [0,6,16][index], escape: spec.escape + [0,12,26][index], cost: spec.cost + (index===2?1:0),
+      effects: Object.fromEntries(Object.entries(spec.effects).map(([key,value],i)=>[key,value+(i===0?index*5:0)])), description: spec.description });
+  });
+  catalog.sort((a,b) => materials.indexOf(a.material)-materials.indexOf(b.material) || slots.indexOf(a.slot)-slots.indexOf(b.slot) || a.slots.length-b.slots.length);
   const conditions = { alert: { name: 'Alert', bonus: 0 }, distracted: { name: 'Distracted', bonus: 15 }, staggered: { name: 'Staggered', bonus: 30 } };
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
   const getItem = id => catalog.find(item => item.id === (typeof id === 'string' ? id.replace(/^(rope|leather|steel)-legs$/, '$1-lower-leg') : id));
@@ -79,8 +93,8 @@ const RestraintSystem = (() => {
     const result = [], occupied = new Set();
     for (const entry of Array.isArray(entries) ? entries : []) {
       const item = getItem(entry?.itemId), method = methods[entry?.methodId];
-      if (!item || !method?.materials?.includes(item.material) || occupied.has(item.slot)) continue;
-      occupied.add(item.slot);
+      if (!item || !method?.materials?.includes(item.material) || item.slots.some(slot=>occupied.has(slot))) continue;
+      item.slots.forEach(slot=>occupied.add(slot));
       result.push({ itemId: item.id, methodId: entry.methodId });
     }
     return result;
@@ -90,6 +104,17 @@ const RestraintSystem = (() => {
     const old = character?.restraint;
     const ids = old === 'Stasis' ? ['steel-wrists', 'steel-ankles', 'steel-arms', 'steel-legs'] : old === 'Wrist lock' ? ['steel-wrists'] : old === 'Ankle lock' ? ['steel-ankles'] : [];
     return sanitize(ids.map(itemId => ({ itemId, methodId: 'latch' })));
+  }
+  function occupiedSlots(character) {
+    return [...new Set(sanitize(character.restraints).flatMap(entry=>getItem(entry.itemId).slots))];
+  }
+  function conflicts(character, itemId) {
+    const item=getItem(itemId);
+    if(!item)return [];
+    return sanitize(character.restraints).flatMap(entry=>{
+      const existing=getItem(entry.itemId), overlap=item.slots.filter(slot=>existing.slots.includes(slot));
+      return overlap.length?[{ itemId: existing.id, name: existing.name, slots: overlap }]:[];
+    });
   }
   function profile(itemId, methodId) {
     const item = getItem(itemId), method = methods[methodId];
@@ -104,14 +129,15 @@ const RestraintSystem = (() => {
       const current = profile(entry.itemId, entry.methodId);
       for (const key of Object.keys(total)) total[key] += current.effects[key];
     }
-    for (const key of Object.keys(total)) total[key] = Math.min(85, total[key]);
+    const clothing=Wear.modifiers(character).effects;
+    for (const key of Object.keys(total)) total[key] = Math.max(-20,Math.min(85,total[key]+(clothing[key]||0)));
     return total;
   }
-  function applyChance(actor, itemId, methodId, condition = 'alert') {
+  function applyChance(actor, itemId, methodId, condition = 'alert', target = {}) {
     const current = profile(itemId, methodId);
     if (!current || !conditions[condition]) return 0;
     const penalty = penalties(actor);
-    return clamp(Math.round(100 - current.difficulty + conditions[condition].bonus - penalty.dexterity * 0.4 - penalty.focus * 0.2), 5, 95);
+    return clamp(Math.round(100 - current.difficulty + conditions[condition].bonus - penalty.dexterity * 0.4 - penalty.focus * 0.2 - Wear.protection(target,current.item.slots)), 5, 95);
   }
   function escapeChance(target, entry) {
     const current = profile(entry.itemId, entry.methodId);
@@ -123,9 +149,10 @@ const RestraintSystem = (() => {
     const current = profile(itemId, methodId);
     if (!current || !conditions[condition]) return { accepted: false, reason: 'Choose a valid restraint and securing method.' };
     const entries = sanitize(target.restraints);
-    if (entries.some(entry => getItem(entry.itemId).slot === current.item.slot)) return { accepted: false, reason: `Release the existing ${getSlot(current.item.slot).label.toLowerCase()} restraint first.` };
+    const blocked=conflicts(target,current.item.id);
+    if (blocked.length) return { accepted: false, reason: `Occupied: ${blocked.map(conflict=>`${conflict.slots.map(slot=>getSlot(slot).label).join(', ')} (${conflict.name})`).join('; ')}. Release overlapping equipment first.` };
     if (!Number.isFinite(ap) || ap < current.cost) return { accepted: false, reason: 'Not enough action points. Refill the trial budget.' };
-    const chance = applyChance(actor, itemId, methodId, condition), roll = Math.floor(random() * 100) + 1, success = roll <= chance;
+    const chance = applyChance(actor, itemId, methodId, condition, target), roll = Math.floor(random() * 100) + 1, success = roll <= chance;
     return { accepted: true, success, roll, chance, ap: ap - current.cost, restraints: success ? [...entries, { itemId: current.item.id, methodId }] : entries };
   }
   function attemptEscape({ target, itemId, ap }, random = Math.random) {
@@ -135,6 +162,6 @@ const RestraintSystem = (() => {
     const chance = escapeChance(target, entry), roll = Math.floor(random() * 100) + 1, success = roll <= chance;
     return { accepted: true, success, roll, chance, ap: ap - 2, restraints: success ? entries.filter(value => value.itemId !== itemId) : entries };
   }
-  return { materials, slots, slotDefinitions, regions, getSlot, attributes, methods, catalog, conditions, getItem, methodsFor, sanitize, migrate, profile, penalties, applyChance, escapeChance, attemptApply, attemptEscape };
+  return { materials, slots, slotDefinitions, regions, getSlot, attributes, methods, catalog, conditions, getItem, methodsFor, sanitize, migrate, occupiedSlots, conflicts, profile, penalties, applyChance, escapeChance, attemptApply, attemptEscape };
 })();
 if (typeof module !== 'undefined') module.exports = RestraintSystem;
