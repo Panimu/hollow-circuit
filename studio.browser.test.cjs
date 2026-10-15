@@ -82,7 +82,37 @@ const fs=require('node:fs');
   assert.match(await page.locator('#character-0 .stage-label').innerText(),/LEGS TOGETHER/);
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await page.locator('#character-0 .stage').screenshot({path:'test-results/cinched-mobile.png'});
+  await page.locator('#character-0 [data-action="reset"]').click();
+  const otherBeforeSilence=await page.locator('#art-1').innerHTML();
+  for(const item of ['arcane-whisper-seal','arcane-echo-filter','arcane-null-visor']){
+   await page.locator(`#character-0 [data-preset="${item}"]`).click();
+   assert.equal(await page.locator('#equipped-0 [data-remove]').count(),1);
+   assert.match(await page.locator('#casting-state-0').innerText(),/SILENCED/);
+   await page.getByLabel('Nova spell',{exact:true}).selectOption('ember-word');
+   await page.locator('#character-0 [data-action="cast"]').click();
+   assert.match(await page.locator('#cast-result-0').innerText(),/blocked/);
+   await page.getByLabel('Nova spell',{exact:true}).selectOption('focus-pulse');
+   await page.locator('#character-0 [data-action="cast"]').click();
+   assert.match(await page.locator('#cast-result-0').innerText(),/passes/);
+   await page.locator('#character-0 .zoom').click();
+   await page.locator('#character-0 .stage').screenshot({path:`test-results/${item}.png`});
+   await page.locator('#character-0 .zoom').click();
+  }
+  await page.locator('#method-0').selectOption('reinforce');
+  await page.locator('#character-0 [data-action="fit"]').click();
+  await page.locator('#save').click();await page.reload();await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Ready.'));
+  assert.match(await page.locator('#equipped-0').innerText(),/Reinforce rune/);
+  assert.match(await page.locator('#casting-state-0').innerText(),/SILENCED/);
+  await page.locator('#character-0 [data-action="cast"]').click();
+  assert.match(await page.locator('#cast-result-0').innerText(),/blocked/);
+  await page.locator('#character-0 .casting').screenshot({path:'test-results/spellcasting-mobile.png'});
+  await page.locator('#character-0 [data-remove="arcane-null-visor"]').click();
+  assert.match(await page.locator('#casting-state-0').innerText(),/VOICE READY/);
+  await page.locator('#character-0 [data-action="cast"]').click();
+  assert.match(await page.locator('#cast-result-0').innerText(),/passes/);
+  assert.equal(await page.locator('#art-1').innerHTML(),otherBeforeSilence);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   assert.deepEqual(errors,[]);
-  console.log('PASS: outfit/skin/hair switching, independent characters, random/clear, replacement, methods, save/reload, zoom, reset, mobile overflow, no JS errors.');
+  console.log('PASS: appearance, independent characters, fitting, persistence, poses, silence designs, spoken/nonverbal casting, removal, mobile overflow, no JS errors.');
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});

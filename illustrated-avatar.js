@@ -47,7 +47,7 @@ const IllustratedAvatar = (() => {
     const base=pic('foundation',`clip-path="url(#${id}-parts)"`);
     const hairTransform=c.style==='bob'?'translate(213 4) scale(.58)':'translate(239 4) scale(.53 .43)';
     const garment=swim||behind?'':pic(c.outfit,`transform="${c.outfit==='streetwear'?'translate(51 99) scale(.90 .93)':'translate(25 119) scale(.93 .92)'}"`);
-    const order={sheaths:0,'lower-leg':1,'upper-leg':2,ankles:3,waist:4,chest:5,armbinder:6,wrists:7};
+    const order={sheaths:0,'lower-leg':1,'upper-leg':2,ankles:3,waist:4,chest:5,armbinder:6,wrists:7,silence:8};
     const frontEntries=[...c.restraints].sort((a,b)=>order[F.getItem(a.itemId).family]-order[F.getItem(b.itemId).family]);
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${detail?'220 0 590 870':'155 0 730 1518'}" role="img" aria-labelledby="${id}-title"><title id="${id}-title">${index===1?'Vesper':'Nova'}, adult age 20, ${options.outfit[c.outfit]}, ${options.style[c.style]}, ${options.skin[c.skin]} skin, ${options.hair[c.hair]} hair. ${c.restraints.length} equipment pieces. Front ${behind?'arms behind':'standing'} view${sheaths?', legs cinched together':''}.</title><defs>
       <clipPath id="${id}-parts">${head}${swim||behind?'':hands}</clipPath><clipPath id="${id}-swim">${swimClip}</clipPath>

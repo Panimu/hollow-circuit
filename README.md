@@ -2,11 +2,15 @@
 
 Open `index.html` in a browser, or run `python -m http.server 8080` and visit http://localhost:8080. No build or dependencies are required. GitHub Pages publishes `main`; asset URLs are versioned with each release.
 
-## Illustrated studio (0.9)
+## Illustrated studio (0.10)
+
+Three arcane silence items are available in the equipment menu and each character's **Spellcasting check** panel: Whisper seal (mouth), Echo filter (mouth), and Null voice visor (mouth + face). These are floating magical projections rendered as SVG effects. Their distinct application/dispel ratings and focus penalties are design values; attuning or reinforcing a rune changes these ratings. The studio now offers 23 designs in total.
+
+`spellcasting.js` checks whether a spell needs a spoken incantation. An active silence item blocks Ember word and Ward chant completely, independently of the Communication percentage; Focus pulse is nonverbal and remains available. Removing silence restores casting eligibility immediately. Equipped runes and activation methods survive saving/reloading. The **Check selected spell** button exercises this rule without spending AP, dealing damage or advancing combat. These new items are studio-only; the older simulation lab is unchanged. Run `node --test restraints.test.js illustrated-avatar.test.js spellcasting.test.js` to include the casting checks.
 
 Open [studio.html](https://panimu.github.io/hollow-circuit/studio.html) for the approved soft anime artwork as an interactive paper doll. Nova and Vesper are 20-year-old adult avatars. Each supports four skin tones, two hairstyles, five hair colours and three complete outfits: streetwear, athletic one-piece swimsuit and full-coverage latex catsuit. There are no glasses or jewellery. Complete outfits are cosmetic; they do not use the older lab's per-garment bonuses.
 
-The studio fits 20 designs: rope, leather and steel variants of anatomical wrist cuffs, ankle restraints, paired thigh straps, tapered calf sleeves, waist belts and torso harnesses, plus a leather monoglove armbinder and a cinched full-length leg sheath. Each region has its own generated silhouette and material treatment; the old shared band sprites are no longer used. Quick-fit buttons beneath each avatar demonstrate the three major designs.
+The original 20 physical equipment designs are: rope, leather and steel variants of anatomical wrist cuffs, ankle restraints, paired thigh straps, tapered calf sleeves, waist belts and torso harnesses, plus a leather monoglove armbinder and a cinched full-length leg sheath. Each region has its own generated silhouette and material treatment; the old shared band sprites are no longer used. Quick-fit buttons beneath each avatar demonstrate the three major designs.
 
 The monoglove occupies shoulders, chest, arms, elbows, wrists, hands and fingers, and switches all three outfits to authored arms-behind artwork. Its front suspension harness is visible on the avatar. A labelled rear **item** inset opens a larger view of the single closed sleeve; this is an equipment illustration, not a rear character view. The leg sheath covers upper thighs, knees, calves, ankles, feet and toes. Its joined casing and shared straps hold both legs together, replacing the underlying leg/foot artwork while preserving exposed hands. It combines with the arms-behind pose; clearing restores the relaxed stance.
 
@@ -18,7 +22,7 @@ Clear restores the relaxed pose; random look, reset, face/torso zoom and indepen
 
 `illustrated-avatar.js` composes original transparent PNG assets using SVG clipping, colour masks and positioning. Generated source images are preserved in `assets/illustrated`; `fitted-prompts-v2.json` records the built-in image-generation prompts for the atlases, garments and arm poses. `cinched-sheath-prompt-v3.json` records the joined leg-sheath edit. Atlas cropping happens at render time; source PNGs are unmodified. The illustrated character supports front standing, arms behind, legs together in the sheath, and their combination. Illustrated rear and kneeling poses are not supported yet. Individual pieces within an outfit cannot yet be mixed.
 
-Run `node --test restraints.test.js illustrated-avatar.test.js`. Studio checks cover appearance/save validation, multi-slot replacement, pose restoration, retained hand coverage, all 120 appearance combinations, independent SVG IDs, and compatible random fittings. With Playwright and Edge installed, `node studio.browser.test.cjs` checks controls, saving/reloading, quick fits, outfit changes, overlays, and mobile overflow. Set `STUDIO_TEST_URL` to validate a deployed page. Screenshots go to the ignored `test-results` directory.
+Run `node --test restraints.test.js illustrated-avatar.test.js spellcasting.test.js`. Studio checks cover appearance/save validation, multi-slot replacement, pose restoration, retained hand coverage, all 120 appearance combinations, independent SVG IDs, and compatible random fittings. With Playwright and Edge installed, `node studio.browser.test.cjs` checks controls, saving/reloading, quick fits, outfit changes, overlays, and mobile overflow. Set `STUDIO_TEST_URL` to validate a deployed page. Screenshots go to the ignored `test-results` directory.
 
 ## Avatars and poses
 

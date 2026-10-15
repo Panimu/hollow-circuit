@@ -1,6 +1,6 @@
 /* Independent appearance studio; does not alter the simulation lab save. */
 (() => {
-  const A=IllustratedAvatar,F=FittedEquipment,R=RestraintSystem,key='hollow-circuit-studio-v1';
+  const A=IllustratedAvatar,F=FittedEquipment,R=RestraintSystem,S=Spellcasting,key='hollow-circuit-studio-v1';
   let roster=A.defaults();
   try {const saved=JSON.parse(localStorage.getItem(key));if(saved?.version===1 && Array.isArray(saved.roster)) roster=roster.map((_,i)=>A.sanitize(saved.roster[i],i));} catch {}
   const names=['Nova','Vesper'],details=[false,false];
@@ -16,6 +16,7 @@
     for(const opt of card.querySelectorAll(`#item-${i} option`))opt.textContent=F.getItem(opt.value).name;
     card.querySelector('.rating').insertAdjacentHTML('beforebegin',`<p class="coverage" id="coverage-${i}"></p>`);
     card.querySelector('.fit-button').insertAdjacentHTML('afterend',`<div class="equipment-detail" id="equipment-detail-${i}"></div>`);
+    card.querySelector('.editor').insertAdjacentHTML('beforeend',`<section class="casting" aria-labelledby="casting-title-${i}"><h3 id="casting-title-${i}">03 / Spellcasting check</h3><p class="casting-state" id="casting-state-${i}" role="status"></p><div class="silence-presets" aria-label="${names[i]} silence equipment">${S.catalog.map(item=>`<button data-preset="${item.id}" data-index="${i}" aria-pressed="false">${item.name}</button>`).join('')}</div><label>Spell<select id="spell-${i}" aria-label="${names[i]} spell">${S.spells.map(spell=>option(spell.id,`${spell.name} · ${spell.verbal?'spoken':'nonverbal'}`,'ember-word')).join('')}</select></label><button data-action="cast" data-index="${i}">Check selected spell</button><p class="cast-result" id="cast-result-${i}" role="status"></p><p class="helper">Free rules preview. Silence blocks spoken spells until the item is removed; nonverbal spells remain available. No damage, AP or combat turn is resolved here.</p></section>`);
     card.querySelector('.helper').textContent='Fitting replaces every overlapping item. The armbinder moves both arms behind the back. The leg sheath cinches both legs together, including knees and feet. Outfits are cosmetic; no AP is spent here. Save to keep both characters on this browser.';
     methods(i);paint(i);
   }
@@ -26,10 +27,12 @@
   }
   function rating(i) {
     const p=F.profile(selection[i].item,selection[i].method);
-    document.querySelector(`#coverage-${i}`).textContent=`Covers: ${p.item.slots.map(s=>R.getSlot(s).label).join(', ')}.`;
+    const silence=p.item.family==='silence';
+    document.querySelector(`#coverage-${i}`).textContent=`Covers: ${p.item.slots.map(s=>R.getSlot(s).label).join(', ')}.${silence?' '+p.item.description+' Blocks all spoken spells.':''}`;
+    document.querySelector(`#method-${i}`).parentElement.firstChild.textContent=silence?'Rune activation':'Securing method';
     const detail=document.querySelector(`#equipment-detail-${i}`),markup=F.detail({itemId:selection[i].item});
     detail.hidden=!markup;detail.innerHTML=markup?`<details><summary>Inspect ${p.item.name.toLowerCase()}</summary>${markup}</details>`:'';
-    document.querySelector(`#rating-${i}`).textContent=`Application difficulty ${p.difficulty} · Escape difficulty ${p.escape} · ${p.cost} AP in simulation. ${Object.entries(p.effects).filter(([,v])=>v).map(([k,v])=>`${R.attributes[k]} −${v}%`).join(' · ')}`;
+    document.querySelector(`#rating-${i}`).textContent=`Application difficulty ${p.difficulty} · ${silence?'Dispel':'Escape'} difficulty ${p.escape} · ${p.cost} AP ${silence?'design rating':'in simulation'}. ${Object.entries(p.effects).filter(([,v])=>v).map(([k,v])=>`${R.attributes[k]} −${v}%`).join(' · ')}`;
   }
   function paint(i) {
     document.querySelector(`#art-${i}`).innerHTML=A.render(roster[i],i,details[i]);
@@ -38,13 +41,18 @@
     const cinched=roster[i].restraints.some(e=>F.getItem(e.itemId).family==='sheaths');
     document.querySelector(`#character-${i} .stage-label`).textContent=`FRONT / ${behind?'ARMS BEHIND':cinched?'LEGS TOGETHER':'STANDING'}${behind&&cinched?' + LEGS TOGETHER':''}`;
     for(const button of document.querySelectorAll(`#character-${i} [data-preset]`))button.setAttribute('aria-pressed',String(roster[i].restraints.some(e=>e.itemId===button.dataset.preset)));
-    document.querySelector(`#equipped-${i}`).innerHTML=roster[i].restraints.length?roster[i].restraints.map(e=>{const item=F.getItem(e.itemId);return `<li><div>${item.name}<small>${R.methods[e.methodId].name} · ${item.slots.map(s=>R.getSlot(s).label).join(', ')}</small></div><button data-remove="${item.id}" data-index="${i}" aria-label="Remove ${item.name} from ${names[i]}">Remove</button></li>`;}).join(''):'<li class="empty">No equipment fitted.</li>';
+    document.querySelector(`#equipped-${i}`).innerHTML=roster[i].restraints.length?roster[i].restraints.map(e=>{const item=F.getItem(e.itemId);return `<li><div>${item.name}<small>${F.methods[e.methodId].name} · ${item.slots.map(s=>R.getSlot(s).label).join(', ')}</small></div><button data-remove="${item.id}" data-index="${i}" aria-label="Remove ${item.name} from ${names[i]}">Remove</button></li>`;}).join(''):'<li class="empty">No equipment fitted.</li>';
+    const source=S.validSources(roster[i])[0],castingState=document.querySelector(`#casting-state-${i}`);
+    castingState.textContent=source?`SILENCED · ${source.name} blocks spoken spells. Nonverbal spells available.`:'VOICE READY · Spoken and nonverbal spells available.';
+    castingState.dataset.silenced=String(Boolean(source));
+    document.querySelector(`#cast-result-${i}`).textContent='';
     const penalties=F.penalties(roster[i]);
     document.querySelector(`#stats-${i}`).innerHTML=Object.entries(R.attributes).map(([k,label])=>`<div class="stat"><span>${label}</span><strong>${100-penalties[k]}%</strong></div>`).join('');
   }
   function sync(i){for(const k of Object.keys(A.options))document.querySelector(`[data-index="${i}"][data-look="${k}"]`).value=roster[i][k];paint(i);}
   root.addEventListener('change',event=>{
     const el=event.target;
+    if(el.id.startsWith('spell-'))document.querySelector(`#cast-result-${el.id.slice(6)}`).textContent='';
     if(el.dataset.look){const i=Number(el.dataset.index);roster[i][el.dataset.look]=el.value;paint(i);status.textContent=`${names[i]} updated. Save both characters to keep this look.`;}
     if(el.dataset.item!==undefined){const i=Number(el.dataset.item);selection[i].item=el.value;methods(i);}
     if(el.dataset.method!==undefined){const i=Number(el.dataset.method);selection[i].method=el.value;rating(i);}
@@ -52,8 +60,12 @@
   root.addEventListener('click',event=>{
     const el=event.target.closest('button');if(!el)return;const i=Number(el.dataset.index);
     if(el.dataset.remove){roster[i].restraints=roster[i].restraints.filter(e=>e.itemId!==el.dataset.remove);paint(i);document.querySelector(`#character-${i} [data-action="fit"]`).focus();}
-    if(el.dataset.preset){selection[i]={item:el.dataset.preset,method:'buckle'};document.querySelector(`#item-${i}`).value=el.dataset.preset;methods(i);roster[i]=A.equip(roster[i],el.dataset.preset,'buckle');paint(i);}
+    if(el.dataset.preset){selection[i]={item:el.dataset.preset,method:'buckle'};document.querySelector(`#item-${i}`).value=el.dataset.preset;methods(i);roster[i]=A.equip(roster[i],el.dataset.preset,selection[i].method);paint(i);}
     switch(el.dataset.action){
+      case 'cast':{
+        const result=S.check(roster[i],document.querySelector(`#spell-${i}`).value),output=document.querySelector(`#cast-result-${i}`);
+        output.textContent=result.reason;output.dataset.allowed=String(result.allowed);return;
+      }
       case 'inspect':selection[i].item='leather-arm-sleeve';selection[i].method=roster[i].restraints.find(e=>e.itemId==='leather-arm-sleeve')?.methodId||'buckle';document.querySelector(`#item-${i}`).value=selection[i].item;methods(i);document.querySelector(`#equipment-detail-${i} details`).open=true;document.querySelector(`#equipment-detail-${i}`).scrollIntoView({behavior:'smooth',block:'center'});return;
       case 'zoom':details[i]=!details[i];el.setAttribute('aria-pressed',String(details[i]));el.textContent=details[i]?'Full figure':'Face & torso';paint(i);return;
       case 'equipment':roster[i].restraints=A.randomEquipment();paint(i);break;

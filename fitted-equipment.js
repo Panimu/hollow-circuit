@@ -1,14 +1,25 @@
 /* Anatomical equipment families and SVG atlas placement for the illustrated studio. */
 const FittedEquipment = (() => {
   const R=typeof RestraintSystem!=='undefined'?RestraintSystem:require('./restraints');
+  const S=typeof Spellcasting!=='undefined'?Spellcasting:require('./spellcasting');
+  const methods={...R.methods,...S.methods};
   const slots=['wrists','ankles','upper-leg','lower-leg','waist','chest'];
   const familyNames={wrists:'wrist cuffs',ankles:'ankle restraints','upper-leg':'thigh straps','lower-leg':'calf sleeves',waist:'waist belt',chest:'torso harness'};
   const catalog=R.catalog.filter(i=>i.slots.length===1&&slots.includes(i.slot)).map(i=>({...i,name:`${i.material} ${familyNames[i.slot]}`,family:i.slot}));
   catalog.push({...R.getItem('leather-arm-sleeve'),name:'Monoglove armbinder',family:'armbinder',slots:['shoulders','chest','arms','elbows','wrists','hands','fingers'],description:'A single shaped sleeve encloses both arms and hands behind the back, supported by a shoulder harness.'});
   catalog.push({...R.getItem('leather-boot-wrap'),name:'Cinched leg sheath',family:'sheaths',slots:['upper-leg','knees','lower-leg','ankles','feet','toes'],description:'A joined casing and shared straps hold both legs together from upper thighs to enclosed feet.'});
+  catalog.push(...S.catalog);
   const getItem=id=>catalog.find(i=>i.id===id);
-  const methodsFor=item=>R.methodsFor(item);
-  function profile(id,method){const item=getItem(id),p=R.profile(id,method);return item&&p?{...p,item}:null;}
+  const methodsFor=item=>item?.family==='silence'?Object.entries(S.methods):R.methodsFor(item);
+  function profile(id,methodId){
+    const item=getItem(id);if(!item)return null;
+    if(item.family==='silence'){
+      if(!Object.hasOwn(S.methods,methodId))return null;
+      const method=S.methods[methodId],effects=Object.fromEntries(Object.keys(R.attributes).map(k=>[k,(item.effects[k]||0)+(method.effects[k]||0)]));
+      return {item,method,difficulty:item.difficulty+method.difficulty,escape:item.escape+method.escape,cost:item.cost+method.cost,effects};
+    }
+    const p=R.profile(id,methodId);return p?{...p,item}:null;
+  }
   function sanitize(entries){
     if(!Array.isArray(entries))return [];
     const result=[],occupied=new Set();
@@ -66,6 +77,7 @@ const FittedEquipment = (() => {
   }
   function render(entry,c,depth='front',prefix='equipment'){
     const item=getItem(entry.itemId);if(!item)return '';
+    if(item.family==='silence')return S.render(item,depth,prefix);
     const material=item.material.toLowerCase(),swim=c.outfit==='swimsuit',family=item.family;
     const front=depth==='front',key=`${prefix}-${item.id}-${depth}`;
     let art='';
@@ -112,6 +124,6 @@ const FittedEquipment = (() => {
     if(item.family==='sheaths')return `<img src="${path('cinched-leg-sheath-v3')}" alt="Joined leg sheath with shared straps holding thighs, knees and ankles together."><p>A continuous sheath cinches both legs together, including the knees, ankles and enclosed feet.</p>`;
     return '';
   }
-  return {catalog,getItem,methodsFor,profile,sanitize,equip,penalties,randomLoadout,assets,path,render,detail};
+  return {catalog,getItem,methods,methodsFor,profile,sanitize,equip,penalties,randomLoadout,assets,path,render,detail};
 })();
 if(typeof module!=='undefined')module.exports=FittedEquipment;
