@@ -18,12 +18,12 @@ test('all 120 appearance combinations render finite geometry with independent SV
  let count=0;
  for(const skin of Object.keys(A.options.skin))for(const style of Object.keys(A.options.style))for(const hair of Object.keys(A.options.hair))for(const outfit of Object.keys(A.options.outfit)){
   const v={skin,style,hair,outfit,restraints:A.randomEquipment()};
-  for(const i of [0,1]){const svg=A.render(v,i,count%2===0);assert.doesNotMatch(svg,/NaN|undefined|Infinity/);assert.match(svg,new RegExp(`id="art${i}-title"`));assert.doesNotMatch(svg,new RegExp(`id="art${1-i}-`));assert.match(svg,new RegExp(`hair-${style}.png`));}count++;
+  for(const i of [0,1]){const svg=A.render(v,i,count%2===0);assert.doesNotMatch(svg,/NaN|undefined|Infinity/);assert.match(svg,new RegExp(`id="art${i}-title"`));assert.doesNotMatch(svg,new RegExp(`id="art${1-i}-`));if(v.restraints.some(e=>F.getItem(e.itemId).hidesHair))assert.doesNotMatch(svg,/data-avatar-hair/);else assert.match(svg,new RegExp(`hair-${style}.png`));}count++;
  }
  assert.equal(count,120);
 });
 test('equipment methods render and random fittings never overlap or need unsupported poses',()=>{
- assert.equal(A.catalog.length,56);
+ assert.equal(A.catalog.length,65);
  for(const item of A.catalog)for(const [methodId] of F.methodsFor(item)){const c=A.equip(A.defaults()[0],item.id,methodId);assert.match(A.render(c),new RegExp(`data-item="${item.id}"`));}
  for(let n=0;n<200;n++){const e=A.randomEquipment();assert.equal(e.length,3);assert.deepEqual(F.sanitize(e),e);const covered=e.flatMap(x=>F.getItem(x.itemId).slots);assert.equal(new Set(covered).size,covered.length);assert.ok(e.every(x=>A.catalog.some(i=>i.id===x.itemId)));}
 });

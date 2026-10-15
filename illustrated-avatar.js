@@ -2,6 +2,7 @@
 const IllustratedAvatar = (() => {
   const R = typeof RestraintSystem !== 'undefined' ? RestraintSystem : require('./restraints');
   const F = typeof FittedEquipment !== 'undefined' ? FittedEquipment : require('./fitted-equipment');
+  const H = typeof HeadEquipment !== 'undefined' ? HeadEquipment : require('./head-equipment');
   const options = {
     skin: { porcelain:'Porcelain', sand:'Sand', bronze:'Bronze', umber:'Umber' },
     style: { bob:'Soft bob', ponytail:'Ponytail' },
@@ -39,7 +40,8 @@ const IllustratedAvatar = (() => {
     const c=sanitize(value,index),id=`art${index === 1 ? 1 : 0}`,swim=c.outfit==='swimsuit';
     const behind=c.restraints.some(e=>F.getItem(e.itemId).family==='armbinder');
     const sheaths=c.restraints.some(e=>F.getItem(e.itemId).family==='sheaths');
-    const head='<path d="M418 0H600V174L563 212L510 238L454 207L418 173Z"/>';
+    const enclosure=c.restraints.map(e=>F.getItem(e.itemId)).find(item=>item.hidesHair);
+    const head=enclosure?`<path d="${H.eyePath(enclosure)}"/>`:'<path d="M418 0H600V174L563 212L510 238L454 207L418 173Z"/>';
     const hands='<rect x="245" y="705" width="110" height="145"/><rect x="675" y="705" width="110" height="145"/>';
     const swimClip='<path d="M478 233H539V255L640 270H1036V1518H0V270H374L478 255Z"/>';
     const tint=skin[c.skin],hair=colors[c.hair];
@@ -47,10 +49,10 @@ const IllustratedAvatar = (() => {
     const base=pic('foundation',`clip-path="url(#${id}-parts)"`);
     const hairTransform=c.style==='bob'?'translate(213 4) scale(.58)':'translate(239 4) scale(.53 .43)';
     const garment=swim||behind?'':pic(c.outfit,`transform="${c.outfit==='streetwear'?'translate(51 99) scale(.90 .93)':'translate(25 119) scale(.93 .92)'}"`);
-    const order={sheaths:0,'lower-leg':1,'upper-leg':2,ankles:3,waist:4,chest:5,armbinder:6,wrists:7,silence:8};
+    const order={sheaths:0,'lower-leg':1,'upper-leg':2,ankles:3,waist:4,chest:5,armbinder:6,wrists:7,silence:8,headgear:9};
     const depth=item=>item.family==='gear'?({feet:0.2,toes:0.3,knees:1.5,shoulders:5.5,arms:5.6,elbows:5.7,hands:7.1,fingers:7.2,neck:7.3,head:7.4,face:7.5}[item.slot]):order[item.family];
     const frontEntries=[...c.restraints].sort((a,b)=>depth(F.getItem(a.itemId))-depth(F.getItem(b.itemId)));
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${detail?'220 0 590 870':'155 0 730 1518'}" role="img" aria-labelledby="${id}-title"><title id="${id}-title">${index===1?'Vesper':'Nova'}, adult age 20, ${options.outfit[c.outfit]}, ${options.style[c.style]}, ${options.skin[c.skin]} skin, ${options.hair[c.hair]} hair. ${c.restraints.length} equipment pieces. Front ${behind?'arms behind':'standing'} view${sheaths?', legs cinched together':''}.</title><defs>
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${detail==='head'?'370 -10 285 320':detail?'220 0 590 870':'155 0 730 1518'}" role="img" aria-labelledby="${id}-title"><title id="${id}-title">${index===1?'Vesper':'Nova'}, adult age 20, ${options.outfit[c.outfit]}, ${options.style[c.style]}, ${options.skin[c.skin]} skin, ${options.hair[c.hair]} hair${enclosure?', covered by '+enclosure.name:''}. ${c.restraints.length} equipment pieces. Front ${behind?'arms behind':'standing'} view${sheaths?', legs cinched together':''}.</title><defs>
       <clipPath id="${id}-parts">${head}${swim||behind?'':hands}</clipPath><clipPath id="${id}-swim">${swimClip}</clipPath>
       <clipPath id="${id}-posebody"><path d="M455 233H565V260H1036V1518H0V260H455Z"/></clipPath>
       <clipPath id="${id}-under-sheaths"><rect width="1036" height="740"/>${behind?'':'<rect x="245" y="705" width="90" height="145"/><rect x="685" y="705" width="90" height="145"/>'}</clipPath>
@@ -61,7 +63,7 @@ const IllustratedAvatar = (() => {
       <filter id="${id}-hair" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0"/><feComponentTransfer>${['R','G','B'].map((ch,n)=>`<feFunc${ch} type="table" tableValues="${hair.map(row=>row[n]).join(' ')}"/>`).join('')}</feComponentTransfer></filter>
       <mask id="${id}-skinmask" maskUnits="userSpaceOnUse" x="0" y="0" width="1036" height="1518"><g filter="url(#${id}-warm)">${body}${base}</g></mask>
       </defs><ellipse cx="515" cy="1482" rx="167" ry="18" fill="#b3a8ae" opacity=".25"/>
-      <g filter="url(#${id}-clean)">${c.restraints.map(e=>F.render(e,c,'rear',id)).join('')}<g data-avatar-body="true" ${sheaths?`clip-path="url(#${id}-under-sheaths)"`:''}>${body}${base}<g mask="url(#${id}-skinmask)" filter="url(#${id}-skin)">${body}${base}</g>${garment}</g><g filter="url(#${id}-hair)">${pic('hair-'+c.style,`transform="${hairTransform}"`)}</g>${frontEntries.map(e=>F.render(e,c,'front',id)).join('')}</g></svg>`;
+      <g filter="url(#${id}-clean)">${c.restraints.map(e=>F.render(e,c,'rear',id)).join('')}<g data-avatar-body="true" ${sheaths?`clip-path="url(#${id}-under-sheaths)"`:''}>${body}${base}<g mask="url(#${id}-skinmask)" filter="url(#${id}-skin)">${body}${base}</g>${garment}</g>${enclosure?'':`<g data-avatar-hair="true" filter="url(#${id}-hair)">${pic('hair-'+c.style,`transform="${hairTransform}"`)}</g>`}${frontEntries.map(e=>F.render(e,c,'front',id)).join('')}</g></svg>`;
   }
   return {options,slots,catalog,defaults,sanitize,equip,randomEquipment,assets,path,render};
 })();

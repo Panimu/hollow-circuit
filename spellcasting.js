@@ -1,5 +1,6 @@
 /* Studio spell rules: a speech requirement is a hard gate, not a stat penalty. */
 const Spellcasting = (() => {
+  const H=typeof HeadEquipment!=='undefined'?HeadEquipment:require('./head-equipment');
   const methods = {
     attune: {name:'Attune rune',difficulty:0,escape:0,cost:0,effects:{}},
     reinforce: {name:'Reinforce rune',difficulty:12,escape:18,cost:1,effects:{focus:5}}
@@ -17,8 +18,11 @@ const Spellcasting = (() => {
   const getItem = id => catalog.find(item=>item.id===id);
   function validSources(character) {
     return (Array.isArray(character?.restraints)?character.restraints:[])
-      .filter(entry=>getItem(entry?.itemId)&&Object.hasOwn(methods,entry?.methodId))
-      .map(entry=>getItem(entry.itemId));
+      .filter(entry=>{
+        const item=getItem(entry?.itemId)||H.getItem(entry?.itemId);
+        return item?.blocksVerbal&&Object.hasOwn(item.family==='headgear'?H.methods:methods,entry?.methodId);
+      })
+      .map(entry=>getItem(entry.itemId)||H.getItem(entry.itemId));
   }
   function check(character,spellId) {
     const spell=spells.find(item=>item.id===spellId);

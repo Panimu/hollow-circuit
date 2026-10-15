@@ -2,11 +2,19 @@
 
 Open `index.html` in a browser, or run `python -m http.server 8080` and visit http://localhost:8080. No build or dependencies are required. GitHub Pages publishes `main`; asset URLs are versioned with each release.
 
-## Illustrated studio (0.11)
+## Illustrated studio (0.12)
 
-The studio now has **56 designs across all 18 equipment slots**, with at least three dedicated options per slot (not counting whole-body coverage toward this minimum). **Browse equipment slot** filters by every location an item covers. Quick-fit shortcuts reset the filter so their selected item remains visible. Selecting a new item shows its description, coverage, method ratings and penalties before fitting.
+Nine headgear designs bring the studio to **65 equipment designs**. The **Headgear** shortcuts beneath each avatar fit a ward helmet, fabric mask or resonance faceplate; **Head close-up** zooms into the face and toggles back to the full figure. All variants are available through the Head and Mouth slot filters.
 
-`dungeon-equipment.js` adds 33 nonsexual armor/simulator modules: three dedicated silhouettes each for toes, feet, knees, shoulders, arms, elbows, hands, fingers, neck, face and head. Composite pieces use curved pads/plates, alloy pieces use articulated plates, and prism pieces use angular projections/sensors. Each of the 33 has separately authored SVG geometry, dimensional shading, slot-specific placement and an inspectable detail view. Pairs render on both sides; feet/toes and upper arms/elbows remain independently equipable. The front-docked modules do not use wrapping straps. Other slot designs and silence equipment remain available.
+`head-equipment.js` adds Scout, Sentinel and Prism enclosed helmets; Scout, Ranger and Runewoven fabric masks; and Resonance, Ceramic hush and Prism counterspell faceplates. Each has a distinct front design, material shading, effects and application/removal ratings. Fit assembly uses base ratings; Synchronize module adds 10 application difficulty, 16 removal difficulty, 1 nominal AP and 4 focus penalty. The studio remains a free fitting/rules preview.
+
+Helmets and fabric masks occupy head, face, mouth and neck together. They hide the hair layer and show the original eyes through aligned openings; the selected hairstyle and color remain saved and reappear on removal. Replacing any covered slot removes the entire assembly. Faceplates cover only the mouth and preserve hair. Scout helmets and Scout/Ranger fabric masks allow spoken spells; Sentinel/Prism helmets, Runewoven masks and all three faceplates block them. Nonverbal spells remain available. These states persist through save/reload.
+
+Run `node --test restraints.test.js illustrated-avatar.test.js spellcasting.test.js dungeon-equipment.test.js head-equipment.test.js`. `node headgear.browser.test.cjs` checks all nine designs, slot conflicts, casting, hair restoration, saving, head close-up and mobile layout. The browser checks accept `STUDIO_TEST_URL` for live deployment verification.
+
+All 18 equipment slots have at least three dedicated options (not counting whole-body coverage toward this minimum). **Browse equipment slot** filters by every location an item covers. Quick-fit shortcuts reset the filter so their selected item remains visible. Selecting a new item shows its description, coverage, method ratings and penalties before fitting.
+
+`dungeon-equipment.js` adds 33 armor/simulator modules: three dedicated silhouettes each for toes, feet, knees, shoulders, arms, elbows, hands, fingers, neck, face and head. Composite pieces use curved pads/plates, alloy pieces use articulated plates, and prism pieces use angular projections/sensors. Each of the 33 has separately authored SVG geometry, dimensional shading, slot-specific placement and an inspectable detail view. Pairs render on both sides; feet/toes and upper arms/elbows remain independently equipable. The front-docked modules do not use wrapping straps. Other slot designs and silence equipment remain available.
 
 Docking uses the base rating; calibration adds 10 application difficulty, 15 removal difficulty, 1 nominal AP and 3 focus penalty. Every design has its own slot-dependent effects and variant ratings. Ratings are preview values; fitting is free. Saved setups retain the selected module and method. Multi-slot replacement remains atomic, and ordinary face/head/neck modules do not silence spoken spells. Pelvic clothing zones in the older lab are not equipment slots in this studio.
 
