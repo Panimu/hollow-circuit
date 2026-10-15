@@ -33,7 +33,7 @@ test('whole garments replace all overlapping pieces, restore pose and preserve o
  c=A.equip(c,'leather-arm-sleeve','padlock');assert.equal(c.restraints.length,1);assert.match(A.render(c),/behind-streetwear-v2/);assert.match(A.render(c),/arms behind view/);
  c=A.equip(c,'rope-wrists','knot');assert.equal(c.restraints.length,1);assert.doesNotMatch(A.render(c),/behind-streetwear-v2/);
  c=A.equip(c,'leather-upper-leg','buckle');c=A.equip(c,'steel-ankles','latch');c=A.equip(c,'rope-lower-leg','knot');
-  c=A.equip(c,'leather-boot-wrap','buckle');assert.deepEqual(c.restraints.map(e=>e.itemId),['rope-wrists','leather-boot-wrap']);assert.match(A.render(c),/leg-sheaths-v2/);
+  c=A.equip(c,'leather-boot-wrap','buckle');assert.deepEqual(c.restraints.map(e=>e.itemId),['rope-wrists','leather-boot-wrap']);assert.match(A.render(c),/cinched-leg-sheath-v3/);
   assert.match(A.render(c),/<rect x="245" y="705" width="90" height="145"\/>/);
  c=A.equip(c,'leather-upper-leg','buckle');assert.ok(!c.restraints.some(e=>e.itemId==='leather-boot-wrap'));assert.equal(JSON.stringify(other),untouched);
 });
@@ -44,4 +44,16 @@ test('old arm bands migrate safely, supported methods retain ratings, generated 
   assert.doesNotMatch(svg,/(rope|leather|steel)-band.png/);assert.match(svg,new RegExp(`data-family="${item.family}"`));
   const effects=F.profile(e.itemId,e.methodId).effects;assert.deepEqual(effects,R.profile(e.itemId,e.methodId).effects);
  }
+});
+test('rear equipment is occluded by the body; front faces have independent clip paths',()=>{
+ for(const outfit of Object.keys(A.options.outfit))for(const item of F.catalog){
+  const c={...A.defaults()[0],outfit,restraints:[{itemId:item.id,methodId:F.methodsFor(item)[0][0]}]},svg=A.render(c);
+  const rear=svg.indexOf('data-equipment-depth="rear"'),body=svg.indexOf('data-avatar-body="true"'),front=svg.indexOf('data-equipment-depth="front"');
+  assert.ok(rear>0&&rear<body&&body<front,`${outfit}/${item.id}: rear → body → front`);
+  assert.match(svg,/clip-path="url\(#art0-.*-front/);
+  assert.match(svg,/id="art0-contact"/);
+ }
+ const combined=A.render(A.equip(A.defaults()[0],'leather-boot-wrap','buckle'),0)+A.render(A.equip(A.defaults()[1],'leather-boot-wrap','buckle'),1);
+ const ids=[...combined.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(ids).size,ids.length);
+ assert.match(combined,/legs cinched together/);assert.doesNotMatch(combined,/leg-sheaths-v2/);
 });

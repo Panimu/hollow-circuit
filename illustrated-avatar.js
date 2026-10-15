@@ -47,17 +47,20 @@ const IllustratedAvatar = (() => {
     const base=pic('foundation',`clip-path="url(#${id}-parts)"`);
     const hairTransform=c.style==='bob'?'translate(213 4) scale(.58)':'translate(239 4) scale(.53 .43)';
     const garment=swim||behind?'':pic(c.outfit,`transform="${c.outfit==='streetwear'?'translate(51 99) scale(.90 .93)':'translate(25 119) scale(.93 .92)'}"`);
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${detail?'220 0 590 870':'155 0 730 1518'}" role="img" aria-labelledby="${id}-title"><title id="${id}-title">${index===1?'Vesper':'Nova'}, adult age 20, ${options.outfit[c.outfit]}, ${options.style[c.style]}, ${options.skin[c.skin]} skin, ${options.hair[c.hair]} hair. ${c.restraints.length} equipment pieces. Front ${behind?'arms behind':'standing'} view.</title><defs>
+    const order={sheaths:0,'lower-leg':1,'upper-leg':2,ankles:3,waist:4,chest:5,armbinder:6,wrists:7};
+    const frontEntries=[...c.restraints].sort((a,b)=>order[F.getItem(a.itemId).family]-order[F.getItem(b.itemId).family]);
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${detail?'220 0 590 870':'155 0 730 1518'}" role="img" aria-labelledby="${id}-title"><title id="${id}-title">${index===1?'Vesper':'Nova'}, adult age 20, ${options.outfit[c.outfit]}, ${options.style[c.style]}, ${options.skin[c.skin]} skin, ${options.hair[c.hair]} hair. ${c.restraints.length} equipment pieces. Front ${behind?'arms behind':'standing'} view${sheaths?', legs cinched together':''}.</title><defs>
       <clipPath id="${id}-parts">${head}${swim||behind?'':hands}</clipPath><clipPath id="${id}-swim">${swimClip}</clipPath>
       <clipPath id="${id}-posebody"><path d="M455 233H565V260H1036V1518H0V260H455Z"/></clipPath>
       <clipPath id="${id}-under-sheaths"><rect width="1036" height="740"/>${behind?'':'<rect x="245" y="705" width="90" height="145"/><rect x="685" y="705" width="90" height="145"/>'}</clipPath>
       <filter id="${id}-clean" color-interpolation-filters="sRGB"><feComponentTransfer><feFuncA type="linear" slope="1.18" intercept="-.18"/></feComponentTransfer></filter>
+      <filter id="${id}-contact" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="2" stdDeviation="1.4" flood-color="#19151b" flood-opacity=".35"/></filter>
       <filter id="${id}-warm" color-interpolation-filters="sRGB"><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 20 0 -20 0 -.2"/><feComposite in2="SourceAlpha" operator="in"/></filter>
       <filter id="${id}-skin" color-interpolation-filters="sRGB"><feComponentTransfer>${['R','G','B'].map((ch,n)=>`<feFunc${ch} type="linear" slope="${tint[n]}"/>`).join('')}</feComponentTransfer></filter>
       <filter id="${id}-hair" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0"/><feComponentTransfer>${['R','G','B'].map((ch,n)=>`<feFunc${ch} type="table" tableValues="${hair.map(row=>row[n]).join(' ')}"/>`).join('')}</feComponentTransfer></filter>
       <mask id="${id}-skinmask" maskUnits="userSpaceOnUse" x="0" y="0" width="1036" height="1518"><g filter="url(#${id}-warm)">${body}${base}</g></mask>
       </defs><ellipse cx="515" cy="1482" rx="167" ry="18" fill="#b3a8ae" opacity=".25"/>
-      <g filter="url(#${id}-clean)"><g ${sheaths?`clip-path="url(#${id}-under-sheaths)"`:''}>${body}${base}<g mask="url(#${id}-skinmask)" filter="url(#${id}-skin)">${body}${base}</g>${garment}</g><g filter="url(#${id}-hair)">${pic('hair-'+c.style,`transform="${hairTransform}"`)}</g>${c.restraints.map(e=>F.render(e,c)).join('')}</g></svg>`;
+      <g filter="url(#${id}-clean)">${c.restraints.map(e=>F.render(e,c,'rear',id)).join('')}<g data-avatar-body="true" ${sheaths?`clip-path="url(#${id}-under-sheaths)"`:''}>${body}${base}<g mask="url(#${id}-skinmask)" filter="url(#${id}-skin)">${body}${base}</g>${garment}</g><g filter="url(#${id}-hair)">${pic('hair-'+c.style,`transform="${hairTransform}"`)}</g>${frontEntries.map(e=>F.render(e,c,'front',id)).join('')}</g></svg>`;
   }
   return {options,slots,catalog,defaults,sanitize,equip,randomEquipment,assets,path,render};
 })();

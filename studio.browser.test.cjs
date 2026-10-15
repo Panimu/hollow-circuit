@@ -61,6 +61,14 @@ const fs=require('node:fs');
   assert.match(await page.locator('#character-0 .stage-label').innerText(),/STANDING/);
   await page.locator('#character-0 [data-preset="leather-boot-wrap"]').click();
   await page.locator('#character-0 .stage').screenshot({path:'test-results/fitted-sheaths-hands.png'});
+  await page.locator('#character-0 [data-action="clear"]').click();
+  await page.getByLabel('Nova outfit',{exact:true}).selectOption('streetwear');
+  for(const item of ['rope-chest','steel-wrists','leather-upper-leg']){await page.locator('#item-0').selectOption(item);await page.locator('#character-0 [data-action="fit"]').click();}
+  await page.locator('#character-0 .stage').screenshot({path:'test-results/occlusion-reference.png'});
+  await page.locator('#character-0 .zoom').click();
+  await page.locator('#character-0 .stage').screenshot({path:'test-results/occlusion-torso-detail.png'});
+  await page.locator('#character-0 .zoom').click();
+  await page.getByLabel('Nova outfit',{exact:true}).selectOption('swimsuit');
   for(const material of ['rope','leather','steel']){
    await page.locator('#character-0 [data-action="clear"]').click();
    for(const slot of ['wrists','upper-leg','lower-leg','waist','chest']){await page.locator('#item-0').selectOption(`${material}-${slot}`);await page.locator('#character-0 [data-action="fit"]').click();}
@@ -71,7 +79,9 @@ const fs=require('node:fs');
   await page.locator('#save').click();await page.reload();await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Ready.'));
   assert.equal(await page.locator('#character-0 [data-preset="leather-arm-sleeve"]').getAttribute('aria-pressed'),'true');
   assert.equal(await page.locator('#character-0 [data-preset="leather-boot-wrap"]').getAttribute('aria-pressed'),'true');
+  assert.match(await page.locator('#character-0 .stage-label').innerText(),/LEGS TOGETHER/);
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.locator('#character-0 .stage').screenshot({path:'test-results/cinched-mobile.png'});
   assert.deepEqual(errors,[]);
   console.log('PASS: outfit/skin/hair switching, independent characters, random/clear, replacement, methods, save/reload, zoom, reset, mobile overflow, no JS errors.');
  }finally{await browser.close();}
