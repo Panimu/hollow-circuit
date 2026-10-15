@@ -177,6 +177,74 @@ const RestraintSystem = (() => {
     }
     return result;
   }
-  return { materials, slots, slotDefinitions, regions, getSlot, attributes, methods, catalog, conditions, getItem, methodsFor, sanitize, migrate, occupiedSlots, conflicts, profile, penalties, applyChance, escapeChance, attemptApply, attemptEscape, randomLoadout };
+  // Each location counters a particular action; ordinary fallback actions and
+  // escape remain available even when many locations are occupied.
+  const slotRules = {
+    toes: { state:'Balance disrupted', action:'precision-step', label:'Precision step', attribute:'evasion' },
+    feet: { state:'Footwork anchored', action:'sprint', label:'Sprint', attribute:'movement' },
+    ankles: { state:'Jump restricted', action:'jump', label:'Jump', attribute:'movement' },
+    'lower-leg': { state:'Dash restricted', action:'dash', label:'Dash', attribute:'movement' },
+    knees: { state:'Dodge restricted', action:'dodge', label:'Dodge roll', attribute:'evasion' },
+    'upper-leg': { state:'Stride restricted', action:'lunge', label:'Lunge', attribute:'movement' },
+    waist: { state:'Turning restricted', action:'pivot', label:'Quick pivot', attribute:'evasion' },
+    chest: { state:'Recovery disrupted', action:'recover', label:'Recovery burst', attribute:'recovery' },
+    shoulders: { state:'Overhead reach restricted', action:'overhead', label:'Overhead cast', attribute:'dexterity' },
+    arms: { state:'Reach restricted', action:'reach', label:'Reach distant switch', attribute:'dexterity' },
+    elbows: { state:'Parry restricted', action:'parry', label:'Weapon parry', attribute:'dexterity' },
+    wrists: { state:'Tool control restricted', action:'tool', label:'Use two-handed tool', attribute:'dexterity' },
+    hands: { state:'Item handling restricted', action:'item', label:'Use held item', attribute:'dexterity' },
+    fingers: { state:'Gestures restricted', action:'gesture', label:'Gesture spell', attribute:'focus' },
+    neck: { state:'Tracking disrupted', action:'scan', label:'Tracking scan', attribute:'focus' },
+    face: { state:'Targeting disrupted', action:'aim', label:'Precision aim', attribute:'focus' },
+    mouth: { state:'Spoken spells disabled', action:'spoken', label:'Spoken spell', attribute:'communication' },
+    head: { state:'Channeling disrupted', action:'channel', label:'Channel spell', attribute:'focus' }
+  };
+  const actions = [
+    ...slots.map(slot=>({id:slotRules[slot].action,label:slotRules[slot].label,attribute:slotRules[slot].attribute,slot,cost:1})),
+    {id:'step',label:'Short step',attribute:'movement',cost:1},
+    {id:'pulse',label:'Nonverbal pulse',attribute:'focus',cost:1},
+    {id:'observe',label:'Observe surroundings',attribute:'focus',cost:1}
+  ];
+  function restrictions(character){
+    return sanitize(character?.restraints).flatMap(entry=>{
+      const item=getItem(entry.itemId);
+      return item.slots.map(slot=>({slot,itemId:item.id,itemName:item.name,...slotRules[slot]}));
+    });
+  }
+  function actionStatus(character,actionId){
+    const action=actions.find(a=>a.id===actionId);
+    if(!action)return {allowed:false,chance:0,reason:'Choose a valid action.'};
+    const blockers=restrictions(character).filter(r=>r.slot===action.slot);
+    if(blockers.length)return {allowed:false,chance:0,action,blockers,reason:`${action.label} blocked by ${blockers.map(r=>r.itemName).join(', ')}.`};
+    const chance=clamp(Math.round(95-penalties(character)[action.attribute]*0.6),5,95);
+    return {allowed:true,chance,action,blockers:[],reason:`${action.label} available. ${chance}% success; ${action.cost} AP.`};
+  }
+  function attemptAction({target,actionId,ap},random=Math.random){
+    const status=actionStatus(target,actionId);
+    if(!status.allowed)return {accepted:false,...status};
+    if(!Number.isFinite(ap)||ap<status.action.cost)return {accepted:false,reason:'Not enough action points.'};
+    const roll=Math.floor(random()*100)+1;
+    return {accepted:true,success:roll<=status.chance,roll,chance:status.chance,ap:ap-status.action.cost};
+  }
+  function securingOptions(target,itemId){
+    const entry=sanitize(target?.restraints).find(e=>e.itemId===itemId);
+    if(!entry)return [];
+    const current=profile(entry.itemId,entry.methodId);
+    return methodsFor(current.item).filter(([id])=>profile(itemId,id).escape>current.escape);
+  }
+  function secureProfile(actor,target,itemId,methodId,condition='alert'){
+    if(!conditions[condition]||!securingOptions(target,itemId).some(([id])=>id===methodId))return null;
+    const entry=sanitize(target.restraints).find(e=>e.itemId===itemId),before=profile(itemId,entry.methodId),after=profile(itemId,methodId);
+    const penalty=penalties(actor),difficulty=Math.round(after.item.difficulty/2)+20+after.method.difficulty;
+    return {before,after,cost:Math.max(1,after.cost-before.cost),chance:clamp(Math.round(100-difficulty+conditions[condition].bonus-penalty.dexterity*.4-penalty.focus*.2),5,95)};
+  }
+  function attemptSecure({actor,target,itemId,methodId,condition='alert',ap},random=Math.random){
+    const current=secureProfile(actor,target,itemId,methodId,condition);
+    if(!current)return {accepted:false,reason:'Choose a stronger compatible securing method for an equipped restraint.'};
+    if(!Number.isFinite(ap)||ap<current.cost)return {accepted:false,reason:'Not enough action points.'};
+    const roll=Math.floor(random()*100)+1,success=roll<=current.chance;
+    return {accepted:true,success,roll,chance:current.chance,ap:ap-current.cost,restraints:sanitize(target.restraints).map(e=>success&&e.itemId===itemId?{...e,methodId}:e)};
+  }
+  return { materials, slots, slotDefinitions, regions, getSlot, attributes, methods, catalog, conditions, getItem, methodsFor, sanitize, migrate, occupiedSlots, conflicts, profile, penalties, applyChance, escapeChance, attemptApply, attemptEscape, randomLoadout, slotRules, actions, restrictions, actionStatus, attemptAction, securingOptions, secureProfile, attemptSecure };
 })();
 if (typeof module !== 'undefined') module.exports = RestraintSystem;

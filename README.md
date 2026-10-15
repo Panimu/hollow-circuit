@@ -2,6 +2,16 @@
 
 Open `index.html` in a browser, or run `python -m http.server 8080` and visit http://localhost:8080. No build or dependencies are required. GitHub Pages publishes `main`; asset URLs are versioned with each release.
 
+## Restraint systems (0.15)
+
+Open [restraint-systems.html](https://panimu.github.io/hollow-circuit/restraint-systems.html) for the rules trial: 54 dedicated restraints (rope, leather and steel for each of 18 slots), plus 15 multi-slot assemblies. Slot cards expose occupancy and the action each slot counters. For example, ankles counter jumps, hands counter held-item actions, fingers counter gesture spells, and mouth restraints counter spoken spells. These action gates are implemented by `restraints.js` and exercised in the new trial; the earlier pose lab retains its existing application/escape behavior.
+
+Apply restraints, strengthen an existing closure, attempt actions, and escape using a shared six-point budget. Upgrades must increase escape difficulty; unsupported, duplicate or weaker closures are rejected without cost. Successful and failed accepted attempts consume AP. Existing closures survive failed upgrades. Escape clears every slot of a multi-slot item, restoring the corresponding actions. Short steps, observation and nonverbal pulses remain available with penalty-adjusted odds. Action checks do not resolve damage, turn order or elimination.
+
+This mechanics view has its own validated local save (`hollow-circuit-restraint-trial-v1`) for two loadouts. It does not replace the illustrated studio's saved equipment or draw new restraint sprites. AP, condition and history reset on reload. The active list and slot grid show the authoritative restraint state. The studio and original lab link directly to the trial.
+
+Run `node --test restraint-systems.test.js restraints.test.js` for all-slot action gates, assembly release, compatible upgrades, failure/invalid-action behavior and AP accounting. `node restraint-systems.browser.test.cjs` checks all 54 single-slot applications, upgrade/escape flows, target independence, saving, action gates, multi-slot conflicts, failures and mobile layout. Set `SYSTEMS_TEST_URL` to verify the public deployment.
+
 ## Illustrated studio (0.14)
 
 Twelve new transparent PNG pairs replace the hand, knee, thigh and shin artwork, with three options for each region. Built-in image generation produced all twelve sources; exact prompts and the style-reference role are recorded in `assets/illustrated/generated-equipment-v1-prompts.json`. Files are `hands-{scout,alloy,prism}-v1.png`, `knees-{scout,alloy,prism}-v1.png`, `thighs-{woven,leather,steel}-v1.png` and `shins-{woven,leather,steel}-v1.png` under `assets/illustrated/`. The woven thigh variant is now a shaped fabric guard. `generated-equipment.js` crops and places the unmodified source images and separates front surfaces from rear edges for body occlusion. Existing item IDs, ratings and saved loadouts remain compatible. **Legs & hands close-up** makes the fittings easier to inspect on mobile.

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17151d"><title>Restraint systems · Hollow Circuit</title><link rel="stylesheet" href="restraint-systems.css?v=0.15"></head>
+<body><header><a class="brand" href="studio.html">◇ HOLLOW CIRCUIT</a><nav><a href="studio.html">Character studio ↗</a><a href="./#restraint-lab">Pose & clothing lab ↗</a></nav></header>
+<main>
+ <div class="intro"><div><p class="eyebrow">RESTRAINT SYSTEMS / 0.15</p><h1>Control the next move.</h1><p>18 slots. Three materials each. Every restraint counters a specific action.</p></div><button id="save">Save loadouts</button></div>
+ <div class="summary"><strong>54 dedicated restraints + 15 assemblies</strong><span>Apply → strengthen the closure → counter an action → escape.</span></div>
+ <section aria-label="Trial setup" class="setup"><div><span class="eyebrow">CHOOSE THE TARGET</span><div id="targets" class="targets"></div></div><div class="budget"><strong id="ap">6 / 6 AP</strong><button id="refill">Refill AP</button></div></section>
+ <p id="status" role="status">Loading restraint systems…</p>
+ <nav class="jump-links" aria-label="Trial sections"><a href="#catalog-title">Choose restraints ↓</a><a href="#loadout-title">Active loadout ↓</a><a href="#actions-title">Test actions ↓</a></nav>
+ <div class="workspace">
+  <section class="panel catalog-panel" aria-labelledby="catalog-title"><div class="panel-heading"><p class="eyebrow">01 / CHOOSE A LOCATION</p><h2 id="catalog-title">Restraint catalog</h2></div><div id="slots" class="slots"></div><div class="selection-heading"><h3 id="slot-title"></h3><span id="slot-state"></span></div><div id="catalog" class="catalog"></div><details class="assemblies"><summary>Multi-slot assemblies · 15 options</summary><label>Assembly<select id="assembly"><option value="">Choose an assembly</option></select></label><p>Each assembly occupies every listed slot and releases as one item.</p></details><div id="detail" class="detail"></div></section>
+  <div class="right-column">
+   <section class="panel" aria-labelledby="loadout-title"><div class="panel-heading"><p class="eyebrow">02 / ACTIVE CONTROL</p><h2 id="loadout-title">Target loadout</h2></div><div id="performance" class="performance"></div><div id="loadout" class="loadout"></div><button id="clear" class="quiet">Lab release all from target</button></section>
+   <section class="panel action-panel" aria-labelledby="actions-title"><p class="eyebrow">03 / TEST THE CONSEQUENCES</p><h2 id="actions-title">Attempt an action</h2><label>Target action<select id="action"></select></label><p id="action-status"></p><button id="attempt-action" class="primary">Attempt action</button><p class="help">Each action is a success check, not a combat turn. Blocking costs no AP. Escape, short steps and nonverbal pulses remain possible; penalties affect the odds.</p></section>
+   <section class="panel" aria-labelledby="log-title"><p class="eyebrow">TRIAL HISTORY</p><h2 id="log-title">What happened</h2><ol id="log" aria-live="polite" aria-relevant="additions text"></ol></section>
+  </div>
+ </div>
+ <details class="rules"><summary>Trial rules and saving</summary><p>The other character applies or strengthens restraints on the chosen target. Both characters share a six-point trial budget. Accepted attempts spend AP even on failure. Refill starts a fresh budget without removing equipment. Free lab releases are separate from escape checks.</p><p>Every slot has three dedicated restraints: rope, leather and steel. Assemblies occupy multiple slots; overlap is rejected without spending AP. Each occupied slot blocks its listed special action. All items also apply their listed attribute penalties, capped at 85%. Escape costs 2 AP and always retains at least a 5% chance. Stronger securing methods can be applied after the initial restraint without removing it.</p><p>This view saves its two loadouts separately from the character studio and pose lab. AP, target condition and history reset on reload. The slot cards and active list show the restraint state; open the character studio for artwork fitting.</p></details>
+ <noscript><p>Enable JavaScript to use the restraint trial.</p></noscript>
+</main><footer>HOLLOW CIRCUIT · Restraint systems trial · Adult VR avatars</footer>
+<script src="wardrobe.js?v=0.6"></script><script src="restraints.js?v=0.15"></script><script src="restraint-systems.js?v=0.15"></script></body></html>
