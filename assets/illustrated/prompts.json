@@ -1,0 +1,39 @@
+{
+  "generator": "Built-in image generation",
+  "prompts": [
+    {
+      "id": "hair-bob",
+      "ref": "neutral-swimsuit-v1.png",
+      "prompt": "Technical game sprite extraction. Keep the input's exact full portrait canvas, figure position, size, pose, contours, linework, shading and proportions. This asset will be stacked on matching layers at the SAME canvas coordinates. Do not re-center, crop, zoom, move, add text, or redesign anything. Output PNG with a GENUINELY TRANSPARENT alpha background, not a gray background, checkerboard drawing, or white backdrop. No ground shadow. Extract ONLY the blue-black bob hair, including all bangs, crown, side locks and fine flyaway strands. All face, ears, skin, neck, body, clothing, legs, background and shadow must become fully transparent. Keep hair at exactly its original position near the top of the full canvas, with the empty face opening transparent. Do not paint a face or a head underneath. Hair alone is an interchangeable overlay. Preserve every highlight and ink contour."
+    },
+    {
+      "id": "streetwear",
+      "ref": "neutral-streetwear-v1.png",
+      "prompt": "Technical game sprite extraction. Keep the input's exact full portrait canvas, figure position, size, pose, contours, linework, shading and proportions. This asset will be stacked on matching layers at the SAME canvas coordinates. Do not re-center, crop, zoom, move, add text, or redesign anything. Output PNG with a GENUINELY TRANSPARENT alpha background, not a gray background, checkerboard drawing, or white backdrop. No ground shadow. Extract ONLY the three clothing pieces in their exact original worn positions: black turtleneck sweater including sleeves and cuffs, indigo jeans, and the two lace-up ankle boots. Completely remove all hair, face, ears, skin, neck, hands, body, background and shadow to transparency. These should look like clothes worn by an invisible person, not laid flat. Collar and sleeve openings and gaps are transparent. Keep the original garment silhouettes, fabric texture, folds, seams and boots intact."
+    },
+    {
+      "id": "catsuit",
+      "ref": "neutral-catsuit-v1.png",
+      "prompt": "Technical game sprite extraction. Keep the input's exact full portrait canvas, figure position, size, pose, contours, linework, shading and proportions. This asset will be stacked on matching layers at the SAME canvas coordinates. Do not re-center, crop, zoom, move, add text, or redesign anything. Output PNG with a GENUINELY TRANSPARENT alpha background, not a gray background, checkerboard drawing, or white backdrop. No ground shadow. Extract ONLY the opaque black high-collar full-sleeved full-length latex catsuit and the two black ankle boots, at their exact original worn positions. Completely remove all hair, face, ears, neck skin, hands, body, background and shadow to transparency. Show clothes worn by an invisible person, not a flat lay. Collar opening, sleeve openings and all gaps must be transparent. Preserve the original material highlights, seams and silhouette."
+    },
+    {
+      "id": "hair-ponytail",
+      "ref": "neutral-appearance-v1.png",
+      "prompt": "Technical game sprite extraction. Keep the input's exact full portrait canvas, figure position, size, pose, contours, linework, shading and proportions. This asset will be stacked on matching layers at the SAME canvas coordinates. Do not re-center, crop, zoom, move, add text, or redesign anything. Output PNG with a GENUINELY TRANSPARENT alpha background, not a gray background, checkerboard drawing, or white backdrop. No ground shadow. Extract ONLY the chestnut ponytail hairstyle, including bangs, crown, side locks, ponytail and fine strands. All face, ears, skin, neck, body, clothing, legs, background and shadow must become fully transparent. Keep hair at exactly its original position near the top of the full canvas, with the empty face opening transparent. Do not paint a face or a head underneath. Hair alone is an interchangeable overlay. Preserve every highlight and ink contour."
+    },
+    {
+      "id": "foundation",
+      "refs": [
+        "previews/neutral-streetwear-v1.png"
+      ],
+      "prompt": "Edit the supplied illustration of an adult woman into a fully clothed game avatar foundation. KEEP ALL CLOTHING exactly intact: black high-neck sweater, full-length jeans and boots. Keep exact pose, size, adult face, eyes, hands and expression. Only change hairstyle to a completely shaved smooth head with natural scalp shading and keep the eyebrows and eyelashes. No jewelry or glasses. Remove the gray background and ground shadow to a genuinely transparent PNG alpha background. Full-body portrait, preserve complete head and both boots with margins. Do not change her clothes or reveal any additional skin. Do not enlarge or crop. Same detailed soft anime linework and rendering. This is a fully dressed avatar asset for putting separate interchangeable hair layers on top."
+    },
+    {
+      "id": "swim-cutout",
+      "refs": [
+        "previews/neutral-swimsuit-v1.png"
+      ],
+      "prompt": "Background extraction only. Preserve this entire existing illustration of an adult woman wearing an opaque black athletic one-piece swimsuit EXACTLY as supplied: same face, hair, outfit, body, pose, hands, feet, expression, colors, proportions and framing. Remove only the plain gray background and ground shadow, replacing them with genuine transparent alpha. No other changes. Full canvas portrait, no cropping or enlarging. No text or extra objects."
+    }
+  ]
+}

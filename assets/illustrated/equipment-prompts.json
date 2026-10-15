@@ -1,0 +1,17 @@
+{
+  "generator": "Built-in image generation",
+  "prompts": [
+    {
+      "id": "rope-band",
+      "prompt": "Use case: stylized-concept. Single isolated game equipment sprite on genuine transparent PNG alpha. The reference image is only for matching its soft high-quality anime ink lines and cel shading; do NOT include any person, body part or clothing from it. One horizontal open cylindrical band viewed from the front, with a shallow visible oval opening along its top edge. The object silhouette is about three times as wide as tall. Straight-on view, centered, complete object with generous clear margins. Clean readable highlights and edges, physically believable thickness. No text, watermark, ground or background. No chain, loose connector, hands or wearer. This is a standalone inventory equipment asset. Material: a short cuff-shaped band made from three parallel rows of thick tan braided cord. Closely woven fibers and warm shaded grooves. A small compact overlapping cord fastening on the front right. Hand-drawn rope texture with distinct braided strands. No instructions or diagram."
+    },
+    {
+      "id": "leather-band",
+      "prompt": "Use case: stylized-concept. Single isolated game equipment sprite on genuine transparent PNG alpha. The reference image is only for matching its soft high-quality anime ink lines and cel shading; do NOT include any person, body part or clothing from it. One horizontal open cylindrical band viewed from the front, with a shallow visible oval opening along its top edge. The object silhouette is about three times as wide as tall. Straight-on view, centered, complete object with generous clear margins. Clean readable highlights and edges, physically believable thickness. No text, watermark, ground or background. No chain, loose connector, hands or wearer. This is a standalone inventory equipment asset. Material: dark brown leather band with visible padded inner lining, two rows of tiny stitching, a small rectangular brushed-steel buckle on the front right, a neatly tucked strap tail, and three small adjustment holes. Practical functional design. Distinguish matte leather from shiny metal."
+    },
+    {
+      "id": "steel-band",
+      "prompt": "Use case: stylized-concept. Single isolated game equipment sprite on genuine transparent PNG alpha. The reference image is only for matching its soft high-quality anime ink lines and cel shading; do NOT include any person, body part or clothing from it. One horizontal open cylindrical band viewed from the front, with a shallow visible oval opening along its top edge. The object silhouette is about three times as wide as tall. Straight-on view, centered, complete object with generous clear margins. Clean readable highlights and edges, physically believable thickness. No text, watermark, ground or background. No chain, loose connector, hands or wearer. This is a standalone inventory equipment asset. Material: a brushed stainless steel hinged locking cuff with a dark padded lining. Rounded beveled edges, subtle rivets and hinge on one side, a small latch block with a keyhole on the front right. Soft cool gray metallic highlights, no extreme mirrored reflections. A substantial functional piece of fictional training equipment."
+    }
+  ]
+}

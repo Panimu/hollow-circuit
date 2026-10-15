@@ -2,6 +2,16 @@
 
 Open `index.html` in a browser, or run `python -m http.server 8080` and visit http://localhost:8080. No build or dependencies are required. GitHub Pages publishes `main`; asset URLs are versioned with each release.
 
+## Illustrated studio (0.7)
+
+Open [studio.html](https://panimu.github.io/hollow-circuit/studio.html) for the approved soft anime artwork as an interactive front-standing paper doll. Nova and Vesper are 20-year-old adult avatars. Each supports four skin tones, two hairstyles, five hair colours and three complete outfits: streetwear, athletic one-piece swimsuit and full-coverage latex catsuit. There are no glasses or jewellery. Complete outfits are cosmetic; they do not use the older lab's per-garment bonuses.
+
+The studio fits 18 items across wrists, ankles, arms, lower legs, waist and chest, using existing restraint catalog and method ratings. Fitting replaces equipment in the same location, costs no AP and does not run application/escape checks. Random restraints adds three compatible items. Clear, random look, reset, face/torso zoom and independent editing are available. Save both characters persists to a separate versioned local-storage key, leaving the simulation lab save intact.
+
+`illustrated-avatar.js` composes original transparent PNG assets using SVG clipping, colour masks and positioning. Generated source images are preserved in `assets/illustrated`; prompt files record provenance. This is a front-standing fitting preview. The original pose/simulation lab remains available with its larger catalog and procedural renderer. Illustrated rear, kneeling and arms-behind poses are not supported yet. Individual pieces within an outfit cannot yet be mixed.
+
+Run `node --test restraints.test.js illustrated-avatar.test.js`. Studio checks cover appearance/save validation, equipment replacement, all 120 appearance combinations, independent SVG IDs, and compatible random fittings.
+
 ## Avatars and poses
 
 Nova and Vesper are adult avatars with independent appearance, equipment, clothing, and pose settings. `avatar.js` draws an articulated SVG figure with shared joint anchors for limbs, clothing, and restraint layers. The renderer supports front/rear views, standing, legs together, arms behind, kneeling, and kneeling with arms behind. In Automatic mode, boot assemblies bring legs together, arm sleeves place arms behind, and training frames set a supported kneeling pose. Kneeling takes precedence over leg positioning; arm and leg constraints combine. Manual pose controls are visual previews and do not change stats. Rear views expose equipment hidden behind the torso and rear clothing panels.
@@ -36,11 +46,11 @@ Save roster persists both avatars, clothing, restraints, pose preference and vie
 
 Run `node --test restraints.test.js`. Tests cover all item/method combinations, overlap conflicts, atomic application, costs, escape boundaries, clothing modifiers and caps, save migration, material/slot filters, automatic poses, finite SVG coordinates, front/rear garment layers, and independent avatar state. Browser QA covers desktop/mobile layouts and deployed asset loading.
 
-Artwork is procedural SVG. Google Fonts are optional; system fonts work offline.
+The original lab uses procedural SVG; the illustrated studio uses generated PNG layers composited with SVG. Google Fonts are optional; system fonts work offline.
 
 
 ### Quick visual testing
 
-Use **Random restraints** beneath either avatar to replace that character's restraint loadout with 3–5 compatible items and securing methods. The preview switches to automatic posing, with standing, legs together, arms behind, kneeling, and combined poses available across rolls. Clothing, appearance, front/rear view, and trial AP are preserved. **Clear** releases that avatar's restraints. These are free lab previews; use the restraint lab for application rolls. Save roster to retain a random loadout.
+Use **Random restraints** beneath either avatar to replace that character's restraint loadout with 3â€“5 compatible items and securing methods. The preview switches to automatic posing, with standing, legs together, arms behind, kneeling, and combined poses available across rolls. Clothing, appearance, front/rear view, and trial AP are preserved. **Clear** releases that avatar's restraints. These are free lab previews; use the restraint lab for application rolls. Save roster to retain a random loadout.
 
 Build 0.6 adds dimensional material shading, finer facial features and hair strands, tailored clothing seams, and detailed boots and armor.
