@@ -43,6 +43,35 @@ const fs=require('node:fs');
   await page.locator('#character-0 [data-action="reset"]').click();
   assert.equal(await page.getByLabel('Nova outfit',{exact:true}).inputValue(),'streetwear');
   await page.locator('#character-0 .stage').screenshot({path:'test-results/studio-streetwear.png'});
+  await page.setViewportSize({width:1280,height:1000});
+  await page.locator('#character-0 [data-preset="leather-arm-sleeve"]').click();
+  assert.match(await page.locator('#character-0 .stage-label').innerText(),/ARMS BEHIND/);
+  await page.locator('#rear-inset-0').click();assert.equal(await page.locator('#equipment-detail-0 details').getAttribute('open'),'');assert.equal(await page.locator('#equipment-detail-0 img').count(),1);
+  await page.locator('#character-0 .stage').screenshot({path:'test-results/fitted-armbinder.png'});
+  await page.locator('#character-0 [data-preset="leather-upper-leg"]').click();
+  await page.locator('#character-0 .stage').screenshot({path:'test-results/fitted-thighs.png'});
+  await page.locator('#character-0 [data-preset="leather-boot-wrap"]').click();
+  assert.equal(await page.locator('#equipped-0 [data-remove="leather-upper-leg"]').count(),0);
+  await page.locator('#character-0 .stage').screenshot({path:'test-results/fitted-sheaths.png'});
+  for(const outfit of ['catsuit','swimsuit']){
+   await page.getByLabel('Nova outfit',{exact:true}).selectOption(outfit);
+   await page.locator('#character-0 .stage').screenshot({path:`test-results/fitted-${outfit}.png`});
+  }
+  await page.locator('#character-0 [data-action="clear"]').click();
+  assert.match(await page.locator('#character-0 .stage-label').innerText(),/STANDING/);
+  await page.locator('#character-0 [data-preset="leather-boot-wrap"]').click();
+  await page.locator('#character-0 .stage').screenshot({path:'test-results/fitted-sheaths-hands.png'});
+  for(const material of ['rope','leather','steel']){
+   await page.locator('#character-0 [data-action="clear"]').click();
+   for(const slot of ['wrists','upper-leg','lower-leg','waist','chest']){await page.locator('#item-0').selectOption(`${material}-${slot}`);await page.locator('#character-0 [data-action="fit"]').click();}
+   await page.locator('#character-0 .stage').screenshot({path:`test-results/fitted-${material}.png`});
+  }
+  await page.locator('#character-0 [data-preset="leather-arm-sleeve"]').click();
+  await page.locator('#character-0 [data-preset="leather-boot-wrap"]').click();
+  await page.locator('#save').click();await page.reload();await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Ready.'));
+  assert.equal(await page.locator('#character-0 [data-preset="leather-arm-sleeve"]').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('#character-0 [data-preset="leather-boot-wrap"]').getAttribute('aria-pressed'),'true');
+  await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   assert.deepEqual(errors,[]);
   console.log('PASS: outfit/skin/hair switching, independent characters, random/clear, replacement, methods, save/reload, zoom, reset, mobile overflow, no JS errors.');
  }finally{await browser.close();}

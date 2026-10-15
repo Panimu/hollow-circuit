@@ -2,15 +2,21 @@
 
 Open `index.html` in a browser, or run `python -m http.server 8080` and visit http://localhost:8080. No build or dependencies are required. GitHub Pages publishes `main`; asset URLs are versioned with each release.
 
-## Illustrated studio (0.7)
+## Illustrated studio (0.8)
 
-Open [studio.html](https://panimu.github.io/hollow-circuit/studio.html) for the approved soft anime artwork as an interactive front-standing paper doll. Nova and Vesper are 20-year-old adult avatars. Each supports four skin tones, two hairstyles, five hair colours and three complete outfits: streetwear, athletic one-piece swimsuit and full-coverage latex catsuit. There are no glasses or jewellery. Complete outfits are cosmetic; they do not use the older lab's per-garment bonuses.
+Open [studio.html](https://panimu.github.io/hollow-circuit/studio.html) for the approved soft anime artwork as an interactive paper doll. Nova and Vesper are 20-year-old adult avatars. Each supports four skin tones, two hairstyles, five hair colours and three complete outfits: streetwear, athletic one-piece swimsuit and full-coverage latex catsuit. There are no glasses or jewellery. Complete outfits are cosmetic; they do not use the older lab's per-garment bonuses.
 
-The studio fits 18 items across wrists, ankles, arms, lower legs, waist and chest, using existing restraint catalog and method ratings. Fitting replaces equipment in the same location, costs no AP and does not run application/escape checks. Random restraints adds three compatible items. Clear, random look, reset, face/torso zoom and independent editing are available. Save both characters persists to a separate versioned local-storage key, leaving the simulation lab save intact.
+The studio fits 20 designs: rope, leather and steel variants of anatomical wrist cuffs, ankle restraints, paired thigh straps, tapered calf sleeves, waist belts and torso harnesses, plus a leather monoglove armbinder and full-length leg sheaths. Each region has its own generated silhouette and material treatment; the old shared band sprites are no longer used. Quick-fit buttons beneath each avatar demonstrate the three new major designs.
 
-`illustrated-avatar.js` composes original transparent PNG assets using SVG clipping, colour masks and positioning. Generated source images are preserved in `assets/illustrated`; prompt files record provenance. This is a front-standing fitting preview. The original pose/simulation lab remains available with its larger catalog and procedural renderer. Illustrated rear, kneeling and arms-behind poses are not supported yet. Individual pieces within an outfit cannot yet be mixed.
+The monoglove occupies shoulders, chest, arms, elbows, wrists, hands and fingers, and switches all three outfits to authored arms-behind artwork. Its front suspension harness is visible on the avatar. A labelled rear **item** inset opens a larger view of the single closed sleeve; this is an equipment illustration, not a rear character view. Leg sheaths cover upper thighs, knees, calves, ankles, feet and toes, replacing the covered leg/foot artwork while keeping exposed hands visible.
 
-Run `node --test restraints.test.js illustrated-avatar.test.js`. Studio checks cover appearance/save validation, equipment replacement, all 120 appearance combinations, independent SVG IDs, and compatible random fittings.
+`fitted-equipment.js` owns studio coverage, conflicts and atlas placement, reusing the existing engine's material methods and ratings. The armbinder and sheaths use the legacy arm-sleeve/boot-wrap IDs and ratings with expanded studio coverage. Fitting removes every overlapping item as a whole, costs no AP and does not run application/escape checks. Random restraints adds three compatible pieces and includes a major design. Old upper-arm bands migrate to the monoglove with a compatible securing method. The procedural simulation lab is unchanged.
+
+Clear restores the relaxed pose; random look, reset, face/torso zoom and independent editing are available. Save both characters persists to a separate versioned local-storage key, leaving the simulation lab save intact.
+
+`illustrated-avatar.js` composes original transparent PNG assets using SVG clipping, colour masks and positioning. Generated source images are preserved in `assets/illustrated`; `fitted-prompts-v2.json` records the built-in image-generation prompts for the new atlases, garments and poses. Atlas cropping happens at render time; source PNGs are unmodified. The illustrated character supports front standing and arms-behind poses. Illustrated rear and kneeling poses are not supported yet. Individual pieces within an outfit cannot yet be mixed.
+
+Run `node --test restraints.test.js illustrated-avatar.test.js`. Studio checks cover appearance/save validation, multi-slot replacement, pose restoration, retained hand coverage, all 120 appearance combinations, independent SVG IDs, and compatible random fittings. With Playwright and Edge installed, `node studio.browser.test.cjs` checks controls, saving/reloading, quick fits, outfit changes, overlays, and mobile overflow. Set `STUDIO_TEST_URL` to validate a deployed page. Screenshots go to the ignored `test-results` directory.
 
 ## Avatars and poses
 
