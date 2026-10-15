@@ -88,7 +88,7 @@ function appHarness(saved) {
   vm.runInContext(fs.readFileSync('restraints.js','utf8'),context);
   vm.runInContext(fs.readFileSync('avatar.js','utf8'),context);
   vm.runInContext(fs.readFileSync('app.js','utf8'),context);
-  return { context, element, memory, value: expression => JSON.parse(JSON.stringify(vm.runInContext(expression,context))), click: (id,dataset) => element(id).events.click({ target: { closest: () => ({ dataset }) } }) };
+  return { context, element, memory, value: expression => JSON.parse(JSON.stringify(vm.runInContext(expression,context))), click: (id,dataset) => element(id).events.click({ target: { closest: selector => { const match=selector.match(/^\[data-(.+)\]$/); const key=match?.[1].replace(/-([a-z])/g,(_,letter)=>letter.toUpperCase()); return selector==='button'||(key&&Object.hasOwn(dataset,key))?{dataset}:null; } } }) };
 }
 test('UI integration: targeting, stacking, release, save/reload and reset behavior', () => {
   const app = appHarness();
@@ -295,4 +295,45 @@ test('wardrobe and pose UI persist and target each avatar independently',()=>{
   loaded.click('#wardrobe',{unwear:'feet-trial'});
   assert.deepEqual(loaded.value('characters[0].clothing'),[]);
   assert.equal(loaded.value('characters[0].view'),'rear');
+});
+
+
+test('random previews provide varied poses and valid nonoverlapping equipment', () => {
+  let seed=412;const random=()=>((seed=(Math.imul(seed,1664525)+1013904223)>>>0)/4294967296);
+  const poses=new Set(),materials=new Set(),methods=new Set();
+  for(let i=0;i<250;i++){
+    const restraints=R.randomLoadout(random);
+    assert.ok(restraints.length>=3&&restraints.length<=5);
+    assert.deepEqual(R.sanitize(restraints),restraints);
+    const slots=restraints.flatMap(entry=>R.getItem(entry.itemId).slots);
+    assert.equal(new Set(slots).size,slots.length);
+    for(const entry of restraints){assert.ok(R.profile(entry.itemId,entry.methodId));materials.add(R.getItem(entry.itemId).material);methods.add(entry.methodId);}
+    poses.add(A.resolvePose({restraints}).key);
+  }
+  assert.equal(poses.size,5);assert.equal(materials.size,3);assert.equal(methods.size,6);
+});
+
+test('avatar random and clear controls preserve clothing, view, AP and other character', () => {
+  const app=appHarness();
+  app.click('#wardrobe',{wear:'feet-trial'});
+  app.click('#pose-controls',{pose:'kneeling',view:'rear'});
+  app.click('#restraint-lab',{item:'rope-wrists'});
+  app.click('#restraint-lab',{action:'apply'});
+  const other=app.value('characters[1]'),before=app.value('characters[0]'),ap=app.value('actionPoints');
+  app.click('#roster',{randomRestraints:'0'});
+  assert.equal(app.value('characters[0].posePreference'),'auto');
+  assert.equal(app.value('characters[0].view'),before.view);
+  assert.deepEqual(app.value('characters[0].clothing'),before.clothing);
+  assert.deepEqual(app.value('characters[1]'),other);
+  assert.equal(app.value('actionPoints'),ap);
+  assert.equal(app.value('characters[0].restraints.length'),3);
+  app.element('#save').events.click();
+  assert.equal(appHarness(app.memory.get('hollow-circuit-roster')).value('characters[0].restraints.length'),3);
+  app.click('#roster',{clearRestraints:'0'});
+  assert.deepEqual(app.value('characters[0].restraints'),[]);
+  app.click('#roster',{character:'1'});
+  assert.equal(app.value('selected'),1);
+  app.click('#roster',{randomRestraints:'1'});
+  assert.equal(app.value('characters[1].restraints.length'),3);
+  assert.equal(app.value('characters[0].restraints.length'),0);
 });

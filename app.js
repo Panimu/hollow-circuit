@@ -18,7 +18,7 @@ try {const data=JSON.parse(localStorage.getItem('hollow-circuit-roster'));const 
 function doll(c,id){return AvatarSystem.render(c,id,PALETTES,R,W);}
 function stats(c){const base={Scout:[2,5],Sentinel:[5,2],Runner:[1,6]}[c.outfit];return {guard:base[0]+(c.gear==='Pauldrons'?2:c.gear==='Bracers'?1:0),speed:Number((base[1]*(1-R.penalties(c).movement/100)).toFixed(1))};}
 function render(){
- document.querySelector('#roster').innerHTML=characters.map((c,i)=>{const s=stats(c);return `<button class="avatar-card ${i===selected?'selected':''} ${i===1?'enemy':''}" data-character="${i}" aria-pressed="${i===selected}" aria-label="Edit ${c.name}, ${c.role}"><div class="card-top"><span class="tag">${i===0?'01 / PLAYER':'02 / ENEMY'}</span><span class="selection-dot">${i===selected?'✓':''}</span></div><div class="state-label">${c.restraints.length?`◇ ${R.occupiedSlots(c).length} / ${R.slots.length} SLOTS RESTRAINED`:'● READY'}</div><div class="doll-wrap">${doll(c,i)}</div><div class="card-bottom"><div class="card-name"><h3>${c.name}</h3><span>LVL 01</span></div><p class="class-name">${c.outfit} class · ${c.age} years</p><div class="stats"><span>GUARD <b>${s.guard}</b></span><span>SPEED <b>${s.speed}</b></span><span>RECOVERY <b>${100-R.penalties(c).recovery}%</b></span></div></div></button>`;}).join('');
+ document.querySelector('#roster').innerHTML=characters.map((c,i)=>{const s=stats(c);return `<div class="character-panel"><button class="avatar-card ${i===selected?'selected':''} ${i===1?'enemy':''}" data-character="${i}" aria-pressed="${i===selected}" aria-label="Edit ${c.name}, ${c.role}"><div class="card-top"><span class="tag">${i===0?'01 / PLAYER':'02 / ENEMY'}</span><span class="selection-dot">${i===selected?'✓':''}</span></div><div class="state-label">${c.restraints.length?`◇ ${R.occupiedSlots(c).length} / ${R.slots.length} SLOTS RESTRAINED`:'● READY'}</div><div class="doll-wrap">${doll(c,i)}</div><div class="card-bottom"><div class="card-name"><h3>${c.name}</h3><span>LVL 01</span></div><p class="class-name">${c.outfit} class · ${c.age} years</p><div class="stats"><span>GUARD <b>${s.guard}</b></span><span>SPEED <b>${s.speed}</b></span><span>RECOVERY <b>${100-R.penalties(c).recovery}%</b></span></div></div></button><div class="avatar-quick-actions"><button class="quick-random" data-random-restraints="${i}" aria-label="Random restraints for ${c.name}">↻ Random restraints</button><button class="quick-clear" data-clear-restraints="${i}" aria-label="Clear restraints from ${c.name}" ${c.restraints.length?'':'disabled'}>Clear</button></div><p class="avatar-pose-caption">${AvatarSystem.resolvePose(c).name} · ${c.view==='rear'?'Rear':'Front'} view</p></div>`;}).join('');
  const c=characters[selected];document.querySelector('#editor-title').textContent=c.name;document.querySelector('#editor-role').textContent=`${c.role} avatar / ${c.outfit} class`;
  document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab);b.setAttribute('aria-selected',b.dataset.tab===tab);});
  const choice=(key,label)=>`<div class="control"><div class="control-label">${label}</div><div class="choices">${allowed[key].map(v=>`<button class="choice ${c[key]===v?'active':''}" data-key="${key}" data-value="${v}" aria-pressed="${c[key]===v}">${v}</button>`).join('')}</div></div>`;
@@ -27,7 +27,16 @@ function render(){
  renderLab();
  renderWardrobe();
 }
-document.querySelector('#roster').addEventListener('click',e=>{const b=e.target.closest('[data-character]');if(b){selected=Number(b.dataset.character);render();}});
+document.querySelector('#roster').addEventListener('click',e=>{
+ const random=e.target.closest('[data-random-restraints]'),clear=e.target.closest('[data-clear-restraints]');
+ if(random||clear){
+  selected=Number(random?random.dataset.randomRestraints:clear.dataset.clearRestraints);
+  const c=characters[selected];c.restraints=random?R.randomLoadout():[];c.posePreference='auto';
+  logTrial(`${random?'Random preview':'Cleared restraints'} for ${c.name}: ${c.restraints.length} items. No AP spent.`);
+  changed();return;
+ }
+ const b=e.target.closest('[data-character]');if(b){selected=Number(b.dataset.character);render();}
+});
 document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b){tab=b.dataset.tab;render();}});
 function changed(){document.querySelector('#save-status').textContent='Unsaved changes · Preview updated.';render();}
 document.querySelector('#controls').addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(b){characters[selected][b.dataset.key]=PALETTES[b.dataset.key]?Number(b.dataset.value):b.dataset.value;changed();}});

@@ -37,3 +37,10 @@ Save roster persists both avatars, clothing, restraints, pose preference and vie
 Run `node --test restraints.test.js`. Tests cover all item/method combinations, overlap conflicts, atomic application, costs, escape boundaries, clothing modifiers and caps, save migration, material/slot filters, automatic poses, finite SVG coordinates, front/rear garment layers, and independent avatar state. Browser QA covers desktop/mobile layouts and deployed asset loading.
 
 Artwork is procedural SVG. Google Fonts are optional; system fonts work offline.
+
+
+### Quick visual testing
+
+Use **Random restraints** beneath either avatar to replace that character's restraint loadout with 3–5 compatible items and securing methods. The preview switches to automatic posing, with standing, legs together, arms behind, kneeling, and combined poses available across rolls. Clothing, appearance, front/rear view, and trial AP are preserved. **Clear** releases that avatar's restraints. These are free lab previews; use the restraint lab for application rolls. Save roster to retain a random loadout.
+
+Build 0.6 adds dimensional material shading, finer facial features and hair strands, tailored clothing seams, and detailed boots and armor.

@@ -162,6 +162,21 @@ const RestraintSystem = (() => {
     const chance = escapeChance(target, entry), roll = Math.floor(random() * 100) + 1, success = roll <= chance;
     return { accepted: true, success, roll, chance, ap: ap - 2, restraints: success ? entries.filter(value => value.itemId !== itemId) : entries };
   }
-  return { materials, slots, slotDefinitions, regions, getSlot, attributes, methods, catalog, conditions, getItem, methodsFor, sanitize, migrate, occupiedSlots, conflicts, profile, penalties, applyChance, escapeChance, attemptApply, attemptEscape };
+  function randomLoadout(random = Math.random) {
+    const pick=list=>list[Math.min(list.length-1,Math.floor(random()*list.length))];
+    const preset=pick([[],['boot-wrap'],['arm-sleeve'],['leg-frame'],['leg-frame','arm-sleeve']]);
+    const result=[];
+    const add=item=>result.push({itemId:item.id,methodId:pick(methodsFor(item))[0]});
+    for(const family of preset)add(getItem(`${pick(materials).toLowerCase()}-${family}`));
+    const count=3+Math.floor(random()*3);
+    const candidates=catalog.filter(item=>!['boot-wrap','arm-sleeve','leg-frame'].some(family=>item.id.endsWith(`-${family}`)));
+    while(result.length<count){
+      const available=candidates.filter(item=>!conflicts({restraints:result},item.id).length);
+      if(!available.length)break;
+      add(pick(available));
+    }
+    return result;
+  }
+  return { materials, slots, slotDefinitions, regions, getSlot, attributes, methods, catalog, conditions, getItem, methodsFor, sanitize, migrate, occupiedSlots, conflicts, profile, penalties, applyChance, escapeChance, attemptApply, attemptEscape, randomLoadout };
 })();
 if (typeof module !== 'undefined') module.exports = RestraintSystem;
