@@ -5,9 +5,9 @@ const vm = require('node:vm');
 const R = require('./restraints');
 const free = () => ({ restraints: [] });
 
-test('all 12 items cover every material/slot and compatible methods work', () => {
-  assert.equal(R.catalog.length, 12);
-  assert.equal(new Set(R.catalog.map(item => item.id)).size, 12);
+test('all 54 items cover every material/slot and compatible methods work', () => {
+  assert.equal(R.catalog.length, 54);
+  assert.equal(new Set(R.catalog.map(item => item.id)).size, 54);
   for (const material of R.materials) assert.deepEqual(R.catalog.filter(item => item.material === material).map(item => item.slot), R.slots);
   for (const item of R.catalog) for (const [methodId] of R.methodsFor(item)) {
     const p = R.profile(item.id, methodId);
@@ -45,8 +45,8 @@ test('slot collisions, invalid methods and insufficient AP cannot alter a loadou
 });
 
 test('penalty cap, method tradeoffs, conditions and restrained operator affect checks', () => {
-  const target = { restraints: R.catalog.filter(item => item.material === 'Steel').map(item => ({ itemId: item.id, methodId: 'double' })) };
-  assert.deepEqual(R.penalties(target), { movement: 85, dexterity: 80, evasion: 85, recovery: 30 });
+  const target = { restraints: R.catalog.filter(item => item.material === 'Steel' && ['wrists','ankles','arms','lower-leg'].includes(item.slot)).map(item => ({ itemId: item.id, methodId: 'double' })) };
+  assert.deepEqual(R.penalties(target), { movement: 85, dexterity: 80, evasion: 85, recovery: 30, focus: 0, communication: 0 });
   const base = R.profile('leather-wrists', 'buckle'), locked = R.profile('leather-wrists', 'padlock');
   assert.equal(locked.escape - base.escape, 20);
   assert.equal(locked.difficulty - base.difficulty, 8);
@@ -55,7 +55,7 @@ test('penalty cap, method tradeoffs, conditions and restrained operator affect c
   assert.equal(R.applyChance(free(), 'steel-legs', 'double', 'staggered'), 53);
   assert.equal(R.applyChance(target, 'steel-legs', 'double', 'alert'), 5);
   assert.equal(R.applyChance(free(), 'rope-wrists', 'knot', 'staggered'), 95);
-  assert.equal(R.escapeChance(target, target.restraints.find(e => e.itemId === 'steel-legs')), 5);
+  assert.equal(R.escapeChance(target, target.restraints.find(e => e.itemId === 'steel-lower-leg')), 5);
 });
 
 test('exact success boundary is inclusive for application and escape', () => {
@@ -79,7 +79,7 @@ test('save validation removes invalid entries, duplicates and legacy state migra
 
 function appHarness(saved) {
   const elements = new Map();
-  function element(id) { if (!elements.has(id)) elements.set(id, { innerHTML:'', textContent:'', events:{}, addEventListener(type, fn) { this.events[type] = fn; } }); return elements.get(id); }
+  function element(id) { if (!elements.has(id)) elements.set(id, { innerHTML:'', textContent:'', events:{}, scrollIntoView() {}, addEventListener(type, fn) { this.events[type] = fn; } }); return elements.get(id); }
   const memory = new Map(saved ? [['hollow-circuit-roster', saved]] : []);
   const context = vm.createContext({ structuredClone, Math: Object.assign(Object.create(Math), { random: () => 0 }), document: { querySelector: element, querySelectorAll: () => [] }, localStorage: { getItem: key => memory.get(key), setItem: (key,value) => memory.set(key,value) } });
   vm.runInContext(fs.readFileSync('restraints.js','utf8'),context);
@@ -88,6 +88,7 @@ function appHarness(saved) {
 }
 test('UI integration: targeting, stacking, release, save/reload and reset behavior', () => {
   const app = appHarness();
+  app.click('#restraint-lab',{item:'rope-wrists'});
   app.click('#restraint-lab',{action:'apply'});
   assert.equal(app.value('characters[0].restraints.length'),1);
   assert.equal(app.value('characters[1].restraints.length'),0);
@@ -114,4 +115,58 @@ test('app accepts old, malformed and hostile saves without rendering saved marku
   assert.equal(legacy.value('characters[0].name'),'Nova');
   assert.equal(appHarness('{broken').value('characters[0].restraints.length'),0);
   assert.equal(appHarness('[null,null]').value('characters[0].restraints.length'),0);
+});
+
+test('all expanded slots stack independently, render, and persist for either avatar', () => {
+  const app = appHarness();
+  for (const material of R.materials) {
+    const entries = R.catalog.filter(item=>item.material===material).map(item=>({itemId:item.id,methodId:R.methodsFor(item)[0][0]}));
+    const loaded = appHarness(JSON.stringify({version:3,characters:[{restraints:entries},{restraints:entries}]}));
+    assert.equal(loaded.value('characters[0].restraints.length'),18);
+    assert.equal(loaded.value('characters[1].restraints.length'),18);
+    for(const slot of R.slots) assert.match(loaded.element('#roster').innerHTML,new RegExp(`data-slot="${slot}"`));
+    assert.doesNotMatch(loaded.element('#roster').innerHTML,/undefined|NaN/);
+    assert.equal((loaded.element('#active-restraints').innerHTML.match(/class="loadout-slot"/g)||[]).length,18);
+    loaded.element('#save').events.click();
+    const restored=appHarness(loaded.memory.get('hollow-circuit-roster'));
+    assert.deepEqual(restored.value('characters'),loaded.value('characters'));
+    assert.ok(Object.values(loaded.value('R.penalties(characters[0])')).every(value=>value<=85));
+  }
+  assert.equal(app.value('R.slots.length'),18);
+});
+
+test('region, slot and material filters retain a valid visible selection', () => {
+  const app=appHarness();
+  app.click('#restraint-lab',{region:'Head & neck'});
+  assert.equal(app.value('filteredCatalog().length'),4);
+  assert.ok(app.value('filteredCatalog().some(item=>item.id===selectedItem)'));
+  app.element('#slot-filter').events.change({target:{value:'mouth'}});
+  assert.equal(app.value('selectedItem'),'rope-mouth');
+  app.click('#restraint-lab',{material:'Steel'});
+  assert.equal(app.value('selectedItem'),'steel-mouth');
+  assert.equal(app.value('selectedMethod'),'latch');
+  app.click('#restraint-lab',{browseSlot:'upper-leg'});
+  assert.equal(app.value('selectedItem'),'steel-upper-leg');
+  assert.equal(app.value('regionFilter'),'Lower body');
+  assert.equal(app.value('filteredCatalog().length'),1);
+  app.click('#restraint-lab',{region:'All'});
+  assert.equal(app.value('filteredCatalog().length'),18);
+});
+
+test('old leg equipment migrates to lower legs, leaving upper legs independently usable', () => {
+  for(const material of R.materials){
+    const key=material.toLowerCase(), methodId=R.methodsFor(R.getItem(`${key}-lower-leg`))[0][0];
+    const migrated=R.migrate({restraints:[{itemId:`${key}-legs`,methodId}]});
+    assert.deepEqual(migrated,[{itemId:`${key}-lower-leg`,methodId}]);
+    const result=R.attemptApply({target:{restraints:migrated},actor:free(),itemId:`${key}-upper-leg`,methodId,ap:6},()=>0);
+    assert.equal(result.restraints.length,2);
+  }
+});
+
+test('focus penalties affect both checks and mouth equipment reduces communication', () => {
+  const target={restraints:[{itemId:'rope-face',methodId:'knot'}]};
+  assert.equal(R.penalties(target).focus,25);
+  assert.equal(R.applyChance(target,'rope-wrists','knot'),71);
+  assert.equal(R.escapeChance(target,target.restraints[0]),62);
+  assert.equal(R.penalties({restraints:[{itemId:'rope-mouth',methodId:'knot'}]}).communication,45);
 });

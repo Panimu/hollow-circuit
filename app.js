@@ -10,18 +10,29 @@ const defaults = [
 let characters = structuredClone(defaults), selected = 0, tab = 'appearance';
 const allowed={hair:['Ponytail','Bob','Crop'],outfit:['Scout','Sentinel','Runner'],gear:['Bracers','Pauldrons','None']};
 const R = RestraintSystem;
-let material = 'Rope', selectedItem = 'rope-wrists', selectedMethod = 'knot', condition = 'alert', actionPoints = 6;
+let material = 'Rope', selectedItem = 'rope-toes', selectedMethod = 'knot', condition = 'alert', actionPoints = 6;
+let regionFilter = 'All', slotFilter = 'all';
 let trialLog = [];
 try {const data=JSON.parse(localStorage.getItem('hollow-circuit-roster'));const saved=Array.isArray(data)?data:data?.characters;if(Array.isArray(saved)&&saved.length===2) characters=defaults.map((base,i)=>{const c={...base};for(const key of Object.keys(PALETTES))if(Number.isInteger(saved[i]?.[key])&&PALETTES[key][saved[i][key]])c[key]=saved[i][key];for(const key of Object.keys(allowed))if(allowed[key].includes(saved[i]?.[key]))c[key]=saved[i][key];c.restraints=R.migrate(saved[i]);return c;});}catch{}
 function restraintArt(c) {
  return c.restraints.map(entry => {
   const item=R.getItem(entry.itemId), color={Rope:'#d3b785',Leather:'#a7704e',Steel:'#b9cbd4'}[item.material];
+  const slot=R.getSlot(item.slot), width=slot.width, height=['mouth','toes','fingers','head'].includes(item.slot)?8:12;
   const band=(x,y)=> item.material==='Rope'
-   ? `<path d="M${x-11} ${y-5}q11 6 22 0m-22 5q11 6 22 0m-22 5q11 6 22 0" fill="none" stroke="${color}" stroke-width="3"/>`
-   : `<rect x="${x-12}" y="${y-7}" width="24" height="15" rx="${item.material==='Steel'?5:2}" fill="${color}" stroke="#293238" stroke-width="2"/><rect x="${x-3}" y="${y-4}" width="7" height="9" fill="none" stroke="${item.material==='Steel'?'#effaff':'#e1c59c'}" stroke-width="2"/>`;
-  const pair={wrists:[87,213,252],ankles:[125,175,378],arms:[103,197,187],legs:[128,172,305]}[item.slot];
-  const [left,right,y]=pair, isLocked=['padlock','double'].includes(entry.methodId);
-  return `<g data-restraint="${item.id}"><title>${item.name} · ${R.methods[entry.methodId].name}</title>${band(left,y)}${band(right,y)}<path d="M${left+10} ${y+4}Q150 ${y+25} ${right-10} ${y+4}" fill="none" stroke="#152024" stroke-width="5"/><path d="M${left+10} ${y+4}Q150 ${y+25} ${right-10} ${y+4}" fill="none" stroke="${color}" stroke-width="3" ${item.material==='Steel'?'stroke-dasharray="4 3"':''}/>${isLocked?`<path d="M146 ${y+14}v-5a4 4 0 0 1 8 0v5" fill="none" stroke="#f0d78c" stroke-width="2"/><rect x="143" y="${y+12}" width="14" height="11" rx="2" fill="#d7b667"/><circle cx="150" cy="${y+17}" r="1.5" fill="#453f2c"/>`:''}</g>`;
+   ? `<path d="M${x-width/2} ${y-height/2}q${width/2} 4 ${width} 0m${-width} ${height/2}q${width/2} 4 ${width} 0m${-width} ${height/2}q${width/2} 4 ${width} 0" fill="none" stroke="${color}" stroke-width="2.5"/>`
+   : `<rect x="${x-width/2}" y="${y-height/2}" width="${width}" height="${height}" rx="${item.material==='Steel'?4:2}" fill="${color}" stroke="#293238" stroke-width="1.5"/><path d="M${x-3} ${y-3}h6v6h-6Z" fill="none" stroke="${item.material==='Steel'?'#effaff':'#e1c59c'}" stroke-width="1.5"/>`;
+  const isLocked=['padlock','double'].includes(entry.methodId);
+  let art, lockX, lockY;
+  if(slot.pair){
+   const [left,right,y]=slot.pair;lockX=150;lockY=Math.min(y+12,415);
+   art=`${band(left,y)}${band(right,y)}<path d="M${left+width/2} ${y+3}Q150 ${lockY+4} ${right-width/2} ${y+3}" fill="none" stroke="${color}" stroke-width="2" ${item.material==='Steel'?'stroke-dasharray="4 3"':''}/>`;
+  }else{
+   const [x,y]=slot.center;lockX=x+width/2-4;lockY=y;
+   art=band(x,y);
+   if(['face','mouth'].includes(item.slot))art+=`<path d="M${x-7} ${y-2}v4m4-4v4m6-4v4m4-4v4" stroke="#20323a" stroke-width="1.5"/>`;
+  }
+  const lock=isLocked?`<g transform="translate(${lockX} ${lockY})"><path d="M-3 0v-3a3 3 0 0 1 6 0v3" fill="none" stroke="#f0d78c" stroke-width="1.5"/><rect x="-5" y="-1" width="10" height="8" rx="2" fill="#d7b667"/><circle cx="0" cy="3" r="1" fill="#453f2c"/></g>`:'';
+  return `<g data-restraint="${item.id}" data-slot="${slot.id}"><title>${slot.label}: ${item.name} · ${R.methods[entry.methodId].name}</title>${art}${lock}</g>`;
  }).join('');
 }
 function doll(c, id) {
@@ -40,12 +51,12 @@ function doll(c, id) {
 }
 function stats(c){const base={Scout:[2,5],Sentinel:[5,2],Runner:[1,6]}[c.outfit];return {guard:base[0]+(c.gear==='Pauldrons'?2:c.gear==='Bracers'?1:0),speed:Number((base[1]*(1-R.penalties(c).movement/100)).toFixed(1))};}
 function render(){
- document.querySelector('#roster').innerHTML=characters.map((c,i)=>{const s=stats(c);return `<button class="avatar-card ${i===selected?'selected':''} ${i===1?'enemy':''}" data-character="${i}" aria-pressed="${i===selected}" aria-label="Edit ${c.name}, ${c.role}"><div class="card-top"><span class="tag">${i===0?'01 / PLAYER':'02 / ENEMY'}</span><span class="selection-dot">${i===selected?'✓':''}</span></div><div class="state-label">${c.restraints.length?`◇ ${c.restraints.length} / 4 SLOTS RESTRAINED`:'● READY'}</div><div class="doll-wrap">${doll(c,i)}</div><div class="card-bottom"><div class="card-name"><h3>${c.name}</h3><span>LVL 01</span></div><p class="class-name">${c.outfit} class · ${c.age} years</p><div class="stats"><span>GUARD <b>${s.guard}</b></span><span>SPEED <b>${s.speed}</b></span><span>RECOVERY <b>${100-R.penalties(c).recovery}%</b></span></div></div></button>`;}).join('');
+ document.querySelector('#roster').innerHTML=characters.map((c,i)=>{const s=stats(c);return `<button class="avatar-card ${i===selected?'selected':''} ${i===1?'enemy':''}" data-character="${i}" aria-pressed="${i===selected}" aria-label="Edit ${c.name}, ${c.role}"><div class="card-top"><span class="tag">${i===0?'01 / PLAYER':'02 / ENEMY'}</span><span class="selection-dot">${i===selected?'✓':''}</span></div><div class="state-label">${c.restraints.length?`◇ ${c.restraints.length} / ${R.slots.length} SLOTS RESTRAINED`:'● READY'}</div><div class="doll-wrap">${doll(c,i)}</div><div class="card-bottom"><div class="card-name"><h3>${c.name}</h3><span>LVL 01</span></div><p class="class-name">${c.outfit} class · ${c.age} years</p><div class="stats"><span>GUARD <b>${s.guard}</b></span><span>SPEED <b>${s.speed}</b></span><span>RECOVERY <b>${100-R.penalties(c).recovery}%</b></span></div></div></button>`;}).join('');
  const c=characters[selected];document.querySelector('#editor-title').textContent=c.name;document.querySelector('#editor-role').textContent=`${c.role} avatar / ${c.outfit} class`;
  document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab);b.setAttribute('aria-selected',b.dataset.tab===tab);});
  const choice=(key,label)=>`<div class="control"><div class="control-label">${label}</div><div class="choices">${allowed[key].map(v=>`<button class="choice ${c[key]===v?'active':''}" data-key="${key}" data-value="${v}" aria-pressed="${c[key]===v}">${v}</button>`).join('')}</div></div>`;
  const swatches=(key,label)=>`<div class="control"><div class="control-label">${label}<small>${PALETTES[key][c[key]].name}</small></div><div class="swatches">${PALETTES[key].map((p,i)=>`<button class="swatch ${c[key]===i?'active':''}" style="--color:${p.value}" data-key="${key}" data-value="${i}" aria-label="${label}: ${p.name}" title="${p.name}" aria-pressed="${c[key]===i}"></button>`).join('')}</div></div>`;
- document.querySelector('#controls').innerHTML=tab==='appearance'?swatches('skin','Skin tone')+choice('hair','Hair style')+swatches('hairColor','Hair color')+swatches('accent','Accent color'):tab==='equipment'?choice('outfit','Suit class')+choice('gear','Equipment')+'<p class="helper">Scout balances defense and movement. Sentinel favors armor; Runner favors speed. Pauldrons add 2 guard, bracers add 1.</p>':`<div class="control-label">Current performance <small>${c.restraints.length} / 4 slots</small></div>${performance(c)}<p class="helper">Open the restraint lab below to apply equipment, inspect debuffs, or attempt an escape. Penalties add together, capped at 85% per attribute.</p><a class="lab-link" href="#restraint-lab">Open restraint lab ↓</a>`;
+ document.querySelector('#controls').innerHTML=tab==='appearance'?swatches('skin','Skin tone')+choice('hair','Hair style')+swatches('hairColor','Hair color')+swatches('accent','Accent color'):tab==='equipment'?choice('outfit','Suit class')+choice('gear','Equipment')+'<p class="helper">Scout balances defense and movement. Sentinel favors armor; Runner favors speed. Pauldrons add 2 guard, bracers add 1.</p>':`<div class="control-label">Current performance <small>${c.restraints.length} / ${R.slots.length} slots</small></div>${performance(c)}<p class="helper">Open the restraint lab below to apply equipment, inspect debuffs, or attempt an escape. Penalties add together, capped at 85% per attribute.</p><a class="lab-link" href="#restraint-lab">Open restraint lab ↓</a>`;
  renderLab();
 }
 document.querySelector('#roster').addEventListener('click',e=>{const b=e.target.closest('[data-character]');if(b){selected=Number(b.dataset.character);render();}});
@@ -53,7 +64,7 @@ document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.cl
 function changed(){document.querySelector('#save-status').textContent='Unsaved changes · Preview updated.';render();}
 document.querySelector('#controls').addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(b){characters[selected][b.dataset.key]=PALETTES[b.dataset.key]?Number(b.dataset.value):b.dataset.value;changed();}});
 document.querySelector('#randomize').addEventListener('click',()=>{const c=characters[selected];for(const key of Object.keys(PALETTES))c[key]=Math.floor(Math.random()*PALETTES[key].length);c.hair=allowed.hair[Math.floor(Math.random()*allowed.hair.length)];changed();});
-document.querySelector('#save').addEventListener('click',()=>{try{localStorage.setItem('hollow-circuit-roster',JSON.stringify({version:2,characters}));document.querySelector('#save-status').textContent='Roster and restraints saved on this browser.';}catch{document.querySelector('#save-status').textContent='Storage unavailable. Your preview still works.';}});
+document.querySelector('#save').addEventListener('click',()=>{try{localStorage.setItem('hollow-circuit-roster',JSON.stringify({version:3,characters}));document.querySelector('#save-status').textContent='Roster and restraints saved on this browser.';}catch{document.querySelector('#save-status').textContent='Storage unavailable. Your preview still works.';}});
 function effectsList(effects) {
  return Object.entries(effects).filter(([,value])=>value>0).map(([key,value])=>`<span class="debuff">−${value}% ${R.attributes[key]}</span>`).join('');
 }
@@ -66,27 +77,42 @@ function renderLab() {
  const chance=R.applyChance(actor,selectedItem,selectedMethod,condition);
  const disabled=occupied||actionPoints<p.cost;
  document.querySelector('#lab-targets').innerHTML=characters.map((c,i)=>`<button class="choice ${selected===i?'active':''}" data-target="${i}" aria-pressed="${selected===i}">${c.name} · ${c.role}</button>`).join('');
- document.querySelector('#material-tabs').innerHTML=R.materials.map(value=>`<button class="material-tab ${material===value?'active':''}" data-material="${value}" aria-pressed="${material===value}"><span class="material-dot ${value.toLowerCase()}"></span>${value}<small>04</small></button>`).join('');
- document.querySelector('#restraint-catalog').innerHTML=R.catalog.filter(item=>item.material===material).map(item=>`<button class="restraint-card ${selectedItem===item.id?'active':''}" data-item="${item.id}" aria-pressed="${selectedItem===item.id}"><span class="catalog-slot">${item.slot} <span>${item.cost} AP</span></span><strong>${item.name}</strong><p>${item.description}</p><div class="debuff-list">${effectsList(item.effects)}</div><div class="catalog-rating"><span>Apply <b>${item.difficulty}</b></span><span>Escape <b>${item.escape}</b></span><span>/ 100</span></div></button>`).join('');
- document.querySelector('#restraint-detail').innerHTML=`<div class="eyebrow">${p.item.material.toUpperCase()} / ${p.item.slot.toUpperCase()}</div><h3>${p.item.name}</h3><div class="control"><div class="control-label">Securing method</div><div class="choices">${R.methodsFor(p.item).map(([id,m])=>`<button class="choice ${selectedMethod===id?'active':''}" data-method="${id}" aria-pressed="${selectedMethod===id}">${m.name}</button>`).join('')}</div><p class="helper">${p.method.description}</p></div><div class="debuff-list">${effectsList(p.effects)}</div><div class="detail-ratings"><div><strong>${p.difficulty}</strong><span>Apply difficulty</span></div><div><strong>${p.escape}</strong><span>Escape difficulty</span></div><div><strong>${p.cost} <small>AP</small></strong><span>Attempt cost</span></div></div><div class="control"><div class="control-label">Target condition <small>Trial modifier</small></div><div class="choices">${Object.entries(R.conditions).map(([id,c])=>`<button class="choice ${condition===id?'active':''}" data-condition="${id}" aria-pressed="${condition===id}">${c.name}</button>`).join('')}</div></div><div class="odds"><span>${actor.name} → ${target.name}<small>Application success</small></span><strong>${chance}%</strong></div><button class="primary apply-button" data-action="apply" ${disabled?'disabled':''}>${occupied?'Slot already occupied':`Attempt application · ${p.cost} AP`}</button><p class="helper action-help">${occupied?`Release ${target.name}'s ${p.item.slot} slot before applying this item.`:actionPoints<p.cost?'Refill action points to try this item.':`Both success and failure spend ${p.cost} AP. ${actor.name}'s dexterity affects these odds.`}</p>`;
+ document.querySelector('#material-tabs').innerHTML=R.materials.map(value=>`<button class="material-tab ${material===value?'active':''}" data-material="${value}" aria-pressed="${material===value}"><span class="material-dot ${value.toLowerCase()}"></span>${value}<small>${R.catalog.filter(item=>item.material===value).length}</small></button>`).join('');
+ document.querySelector('#region-filters').innerHTML=['All',...R.regions].map(region=>`<button class="choice ${regionFilter===region?'active':''}" data-region="${region}" aria-pressed="${regionFilter===region}">${region==='All'?'All regions':region}</button>`).join('');
+ const visibleSlots=R.slotDefinitions.filter(slot=>regionFilter==='All'||slot.region===regionFilter);
+ document.querySelector('#slot-filter').innerHTML='<option value="all">All slots in region</option>'+visibleSlots.map(slot=>`<option value="${slot.id}">${slot.label}</option>`).join('');
+ document.querySelector('#slot-filter').value=slotFilter;
+ const items=filteredCatalog();
+ document.querySelector('#catalog-count').textContent=`${items.length} of ${R.catalog.length} items · ${R.slots.length} body slots`;
+ document.querySelector('#restraint-catalog').innerHTML=items.map(item=>`<button class="restraint-card ${selectedItem===item.id?'active':''}" data-item="${item.id}" aria-pressed="${selectedItem===item.id}"><span class="catalog-slot">${R.getSlot(item.slot).label} <span>${item.cost} AP</span></span><strong>${item.name}</strong><p>${item.description}</p><div class="debuff-list">${effectsList(item.effects)}</div><div class="catalog-rating"><span>Apply <b>${item.difficulty}</b></span><span>Escape <b>${item.escape}</b></span><span>/ 100</span></div></button>`).join('');
+ document.querySelector('#restraint-detail').innerHTML=`<div class="eyebrow">${p.item.material.toUpperCase()} / ${R.getSlot(p.item.slot).label.toUpperCase()}</div><h3>${p.item.name}</h3><div class="control"><div class="control-label">Securing method</div><div class="choices">${R.methodsFor(p.item).map(([id,m])=>`<button class="choice ${selectedMethod===id?'active':''}" data-method="${id}" aria-pressed="${selectedMethod===id}">${m.name}</button>`).join('')}</div><p class="helper">${p.method.description}</p></div><div class="debuff-list">${effectsList(p.effects)}</div><div class="detail-ratings"><div><strong>${p.difficulty}</strong><span>Apply difficulty</span></div><div><strong>${p.escape}</strong><span>Escape difficulty</span></div><div><strong>${p.cost} <small>AP</small></strong><span>Attempt cost</span></div></div><div class="control"><div class="control-label">Target condition <small>Trial modifier</small></div><div class="choices">${Object.entries(R.conditions).map(([id,c])=>`<button class="choice ${condition===id?'active':''}" data-condition="${id}" aria-pressed="${condition===id}">${c.name}</button>`).join('')}</div></div><div class="odds"><span>${actor.name} → ${target.name}<small>Application success</small></span><strong>${chance}%</strong></div><button class="primary apply-button" data-action="apply" ${disabled?'disabled':''}>${occupied?'Slot already occupied':`Attempt application · ${p.cost} AP`}</button><p class="helper action-help">${occupied?`Release ${target.name}'s ${R.getSlot(p.item.slot).label.toLowerCase()} slot before applying this item.`:actionPoints<p.cost?'Refill action points to try this item.':`Both success and failure spend ${p.cost} AP. ${actor.name}'s dexterity and focus affect these odds.`}</p>`;
  document.querySelector('#trial-budget').textContent=`${actionPoints} / 6 AP`;
- document.querySelector('#loadout-title').textContent=`${target.name}'s active restraints`;
+ document.querySelector('#loadout-title').textContent=`${target.name}'s loadout · ${target.restraints.length} / ${R.slots.length} slots`;
  document.querySelector('#active-restraints').innerHTML=R.slots.map(slot=>{
   const entry=target.restraints.find(value=>R.getItem(value.itemId).slot===slot);
-  if(!entry)return `<div class="loadout-slot empty"><span class="catalog-slot">${slot}</span><span>Unrestrained</span></div>`;
+  if(!entry)return `<div class="loadout-slot empty"><span class="catalog-slot">${R.getSlot(slot).label}</span><span>Unrestrained</span><button class="release-button" data-browse-slot="${slot}">Browse equipment</button></div>`;
   const current=R.profile(entry.itemId,entry.methodId);
-  return `<div class="loadout-slot"><span class="catalog-slot">${slot} <span class="material-dot ${current.item.material.toLowerCase()}"></span></span><strong>${current.item.name}</strong><small>${current.method.name} · Escape difficulty ${current.escape}/100</small><div class="debuff-list">${effectsList(current.effects)}</div><div class="loadout-actions"><button class="choice" data-escape="${entry.itemId}" ${actionPoints<2?'disabled':''}>Escape ${R.escapeChance(target,entry)}% · 2 AP</button><button class="release-button" data-release="${entry.itemId}" aria-label="Lab release ${current.item.name}">Release</button></div></div>`;
+  return `<div class="loadout-slot"><span class="catalog-slot">${R.getSlot(slot).label} <span class="material-dot ${current.item.material.toLowerCase()}"></span></span><strong>${current.item.name}</strong><small>${current.method.name} · Escape difficulty ${current.escape}/100</small><div class="debuff-list">${effectsList(current.effects)}</div><div class="loadout-actions"><button class="choice" data-escape="${entry.itemId}" ${actionPoints<2?'disabled':''}>Escape ${R.escapeChance(target,entry)}% · 2 AP</button><button class="release-button" data-release="${entry.itemId}" aria-label="Lab release ${current.item.name}">Release</button></div></div>`;
  }).join('');
  document.querySelector('#aggregate-effects').innerHTML=performance(target);
  document.querySelector('#release-all').disabled=!characters.some(c=>c.restraints.length);
  document.querySelector('#trial-log').innerHTML=trialLog.length?trialLog.map(entry=>`<li class="${entry.kind}">${entry.text}</li>`).join(''):'<li class="muted">Choose a target, restraint and securing method, then attempt application.</li>';
 }
 function logTrial(text,kind='neutral') {trialLog.unshift({text,kind});trialLog=trialLog.slice(0,6);}
+function filteredCatalog(){return R.catalog.filter(item=>item.material===material&&(regionFilter==='All'||R.getSlot(item.slot).region===regionFilter)&&(slotFilter==='all'||item.slot===slotFilter));}
+function syncCatalogSelection(){
+ const items=filteredCatalog();
+ if(!items.some(item=>item.id===selectedItem))selectedItem=items[0].id;
+ if(!R.profile(selectedItem,selectedMethod))selectedMethod=R.methodsFor(R.getItem(selectedItem))[0][0];
+}
+document.querySelector('#slot-filter').addEventListener('change',e=>{slotFilter=e.target.value;syncCatalogSelection();renderLab();});
 document.querySelector('#restraint-lab').addEventListener('click',e=>{
  const button=e.target.closest('button');if(!button||button.disabled)return;
  const d=button.dataset,target=characters[selected],actor=characters[1-selected];
  if(d.target!==undefined){selected=Number(d.target);render();return;}
- if(d.material){material=d.material;selectedItem=R.catalog.find(item=>item.material===material).id;selectedMethod=R.methodsFor(R.getItem(selectedItem))[0][0];renderLab();return;}
+ if(d.material){const previousSlot=R.getItem(selectedItem).slot;material=d.material;selectedItem=R.catalog.find(item=>item.material===material&&item.slot===previousSlot).id;syncCatalogSelection();renderLab();return;}
+ if(d.region){regionFilter=d.region;slotFilter='all';syncCatalogSelection();renderLab();return;}
+ if(d.browseSlot){slotFilter=d.browseSlot;regionFilter=R.getSlot(slotFilter).region;syncCatalogSelection();renderLab();document.querySelector('#catalog-filters').scrollIntoView({block:'start'});return;}
  if(d.item){selectedItem=d.item;renderLab();return;}
  if(d.method){selectedMethod=d.method;renderLab();return;}
  if(d.condition){condition=d.condition;renderLab();return;}

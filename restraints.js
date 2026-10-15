@@ -1,8 +1,30 @@
 /* Fictional simulator balance. Percentages are game attributes, not physical guidance. */
 const RestraintSystem = (() => {
   const materials = ['Rope', 'Leather', 'Steel'];
-  const slots = ['wrists', 'ankles', 'arms', 'legs'];
-  const attributes = { movement: 'Movement', dexterity: 'Dexterity', evasion: 'Evasion', recovery: 'Energy recovery' };
+  const slotDefinitions = [
+    { id: 'toes', label: 'Toes', region: 'Lower body', pair: [121,179,406], width: 17 },
+    { id: 'feet', label: 'Feet', region: 'Lower body', pair: [122,178,394], width: 24 },
+    { id: 'ankles', label: 'Ankles', region: 'Lower body', pair: [125,175,378], width: 24 },
+    { id: 'lower-leg', label: 'Lower leg', region: 'Lower body', pair: [126,174,351], width: 23 },
+    { id: 'knees', label: 'Knees', region: 'Lower body', pair: [132,168,324], width: 23 },
+    { id: 'upper-leg', label: 'Upper leg', region: 'Lower body', pair: [134,166,280], width: 25 },
+    { id: 'waist', label: 'Waist', region: 'Upper body', center: [150,222], width: 58 },
+    { id: 'chest', label: 'Chest', region: 'Upper body', center: [150,177], width: 56 },
+    { id: 'shoulders', label: 'Shoulders', region: 'Upper body', pair: [113,187,153], width: 25 },
+    { id: 'arms', label: 'Arms', region: 'Upper body', pair: [103,197,187], width: 24 },
+    { id: 'elbows', label: 'Elbows', region: 'Upper body', pair: [97,203,213], width: 23 },
+    { id: 'wrists', label: 'Wrists', region: 'Upper body', pair: [87,213,249], width: 24 },
+    { id: 'hands', label: 'Hands', region: 'Upper body', pair: [84,216,263], width: 20 },
+    { id: 'fingers', label: 'Fingers', region: 'Upper body', pair: [82,218,274], width: 14 },
+    { id: 'neck', label: 'Neck', region: 'Head & neck', center: [150,140], width: 28 },
+    { id: 'face', label: 'Face', region: 'Head & neck', center: [150,112], width: 43 },
+    { id: 'mouth', label: 'Mouth', region: 'Head & neck', center: [150,128], width: 24 },
+    { id: 'head', label: 'Head', region: 'Head & neck', center: [150,88], width: 52 }
+  ];
+  const slots = slotDefinitions.map(slot => slot.id);
+  const regions = [...new Set(slotDefinitions.map(slot => slot.region))];
+  const getSlot = id => slotDefinitions.find(slot => slot.id === id);
+  const attributes = { movement: 'Movement', dexterity: 'Dexterity', evasion: 'Evasion', recovery: 'Energy recovery', focus: 'Focus', communication: 'Communication' };
   const methods = {
     knot: { name: 'Knot', materials: ['Rope'], difficulty: 0, escape: 0, cost: 0, effects: {}, description: 'Quick setup with the standard escape rating.' },
     cinch: { name: 'Tightening', materials: ['Rope', 'Leather'], difficulty: 10, escape: 12, cost: 1, effects: { movement: 5, dexterity: 5 }, description: 'Adds control at the cost of one extra action point.' },
@@ -15,19 +37,43 @@ const RestraintSystem = (() => {
     { id: 'rope-wrists', name: 'Cord wrist bind', material: 'Rope', slot: 'wrists', difficulty: 24, escape: 22, cost: 2, effects: { dexterity: 25, evasion: 5 }, description: 'Light control that disrupts equipment handling.' },
     { id: 'rope-ankles', name: 'Trail snare', material: 'Rope', slot: 'ankles', difficulty: 32, escape: 28, cost: 2, effects: { movement: 30, evasion: 15 }, description: 'A mobility snare that limits quick repositioning.' },
     { id: 'rope-arms', name: 'Woven arm tether', material: 'Rope', slot: 'arms', difficulty: 42, escape: 36, cost: 3, effects: { dexterity: 30, recovery: 10 }, description: 'Slower to establish, with sustained handling pressure.' },
-    { id: 'rope-legs', name: 'Ranger leg weave', material: 'Rope', slot: 'legs', difficulty: 46, escape: 40, cost: 3, effects: { movement: 25, evasion: 20, recovery: 5 }, description: 'Broad movement control with a small recovery penalty.' },
+    { id: 'rope-lower-leg', name: 'Ranger calf weave', material: 'Rope', slot: 'lower-leg', difficulty: 46, escape: 40, cost: 3, effects: { movement: 25, evasion: 20, recovery: 5 }, description: 'Lower-leg control with a small recovery penalty.' },
     { id: 'leather-wrists', name: 'Padded wrist cuffs', material: 'Leather', slot: 'wrists', difficulty: 30, escape: 34, cost: 2, effects: { dexterity: 30, recovery: 5 }, description: 'Reliable handling suppression with flexible security.' },
     { id: 'leather-ankles', name: 'Stride straps', material: 'Leather', slot: 'ankles', difficulty: 38, escape: 40, cost: 2, effects: { movement: 35, evasion: 10 }, description: 'A stronger movement penalty with moderate setup time.' },
     { id: 'leather-arms', name: 'Warden arm bands', material: 'Leather', slot: 'arms', difficulty: 48, escape: 46, cost: 3, effects: { dexterity: 35, evasion: 10, recovery: 10 }, description: 'Balanced control across three combat attributes.' },
-    { id: 'leather-legs', name: 'Tracker leg straps', material: 'Leather', slot: 'legs', difficulty: 44, escape: 44, cost: 3, effects: { movement: 30, evasion: 25 }, description: 'Designed to counter evasive opponents.' },
+    { id: 'leather-lower-leg', name: 'Tracker calf straps', material: 'Leather', slot: 'lower-leg', difficulty: 44, escape: 44, cost: 3, effects: { movement: 30, evasion: 25 }, description: 'Lower-leg straps designed to counter evasive opponents.' },
     { id: 'steel-wrists', name: 'Linked steel cuffs', material: 'Steel', slot: 'wrists', difficulty: 40, escape: 48, cost: 3, effects: { dexterity: 40, evasion: 10 }, description: 'Heavy handling control with a demanding escape check.' },
     { id: 'steel-ankles', name: 'Chain ankle irons', material: 'Steel', slot: 'ankles', difficulty: 48, escape: 52, cost: 3, effects: { movement: 45, evasion: 15, recovery: 5 }, description: 'Heavy mobility control that also taxes recovery.' },
     { id: 'steel-arms', name: 'Sentinel arm clamps', material: 'Steel', slot: 'arms', difficulty: 58, escape: 58, cost: 4, effects: { dexterity: 40, evasion: 15, recovery: 15 }, description: 'High commitment control for a staggered target.' },
-    { id: 'steel-legs', name: 'Bastion leg braces', material: 'Steel', slot: 'legs', difficulty: 62, escape: 62, cost: 4, effects: { movement: 40, evasion: 30, recovery: 10 }, description: 'The slowest setup, with powerful movement and dodge penalties.' }
+    { id: 'steel-lower-leg', name: 'Bastion calf braces', material: 'Steel', slot: 'lower-leg', difficulty: 62, escape: 62, cost: 4, effects: { movement: 40, evasion: 30, recovery: 10 }, description: 'Heavy lower-leg equipment with powerful movement and dodge penalties.' }
   ];
+  // One independently equipable attachment per material and body slot.
+  // Head attachments affect simulated focus/communications, never physical injury.
+  const additions = [
+    { slot: 'toes', names: ['Toe cord loops','Toe-cap straps','Toe-cap clasps'], difficulty: 28, escape: 20, cost: 2, effects: { movement: 10, evasion: 15 }, description: 'Boot-tip control that disrupts balance and footwork.' },
+    { slot: 'feet', names: ['Foot cord lattice','Foot restraint wraps','Foot anchor plates'], difficulty: 32, escape: 26, cost: 2, effects: { movement: 20, recovery: 5 }, description: 'Foot control that slows travel and energy recovery.' },
+    { slot: 'knees', names: ['Knee cord bands','Knee control straps','Knee limiter braces'], difficulty: 40, escape: 32, cost: 3, effects: { evasion: 25, movement: 10 }, description: 'Knee control that reduces dodging more than travel speed.' },
+    { slot: 'upper-leg', names: ['Upper-leg cord weave','Upper-leg restraint straps','Upper-leg control braces'], difficulty: 44, escape: 36, cost: 3, effects: { movement: 20, evasion: 15, recovery: 5 }, description: 'Upper-leg control, separate from knees and lower legs.' },
+    { slot: 'waist', names: ['Waist cord tether','Waist control belt','Waist anchor belt'], difficulty: 35, escape: 28, cost: 2, effects: { evasion: 20, movement: 10 }, description: 'Limits simulated turning and repositioning.' },
+    { slot: 'chest', names: ['Chest cord lattice','Chest control harness','Chest restraint frame'], difficulty: 46, escape: 35, cost: 3, effects: { recovery: 20, evasion: 10 }, description: 'Torso equipment that taxes recovery and dodge actions.' },
+    { slot: 'shoulders', names: ['Shoulder cord yoke','Shoulder restraint straps','Shoulder control frame'], difficulty: 42, escape: 34, cost: 3, effects: { dexterity: 15, recovery: 10, evasion: 5 }, description: 'Shoulder control with broad action penalties.' },
+    { slot: 'elbows', names: ['Elbow cord loops','Elbow restraint bands','Elbow limiter braces'], difficulty: 38, escape: 30, cost: 2, effects: { dexterity: 20, evasion: 10 }, description: 'Elbow control independent of arms and wrists.' },
+    { slot: 'hands', names: ['Hand cord lattice','Hand restraint mitts','Hand control shells'], difficulty: 34, escape: 27, cost: 2, effects: { dexterity: 25, focus: 5 }, description: 'Hand coverage disrupts item use and precise actions.' },
+    { slot: 'fingers', names: ['Finger cord loops','Finger restraint tabs','Finger control clasps'], difficulty: 40, escape: 23, cost: 2, effects: { dexterity: 20, focus: 10 }, description: 'Fine-control suppression with a demanding setup check.' },
+    { slot: 'neck', names: ['Woven tracking collar','Leather tracking collar','Steel tracking collar'], difficulty: 44, escape: 32, cost: 3, effects: { focus: 15, evasion: 10 }, description: 'A VR tracking attachment that disrupts focus and evasive timing.' },
+    { slot: 'face', names: ['Woven interference visor','Leather interference visor','Steel interference visor'], difficulty: 48, escape: 34, cost: 3, effects: { focus: 25, evasion: 15 }, description: 'A visor that interferes with targeting and spatial cues.' },
+    { slot: 'mouth', names: ['Woven voice suppressor','Leather voice suppressor','Steel voice suppressor'], difficulty: 46, escape: 33, cost: 3, effects: { communication: 45, focus: 5 }, description: 'An external VR module that weakens voice-command abilities.' },
+    { slot: 'head', names: ['Woven control circlet','Leather control headband','Steel control circlet'], difficulty: 50, escape: 38, cost: 3, effects: { focus: 20, recovery: 10 }, description: 'Head equipment that disrupts concentration and energy recovery.' }
+  ];
+  for (const spec of additions) materials.forEach((material,index) => {
+    catalog.push({ id: `${material.toLowerCase()}-${spec.slot}`, name: spec.names[index], material, slot: spec.slot,
+      difficulty: spec.difficulty + [0,6,16][index], escape: spec.escape + [0,12,26][index], cost: spec.cost + (index === 2 ? 1 : 0),
+      effects: Object.fromEntries(Object.entries(spec.effects).map(([key,value],i) => [key, value + (i === 0 ? index * 5 : 0)])), description: spec.description });
+  });
+  catalog.sort((a,b) => materials.indexOf(a.material)-materials.indexOf(b.material) || slots.indexOf(a.slot)-slots.indexOf(b.slot));
   const conditions = { alert: { name: 'Alert', bonus: 0 }, distracted: { name: 'Distracted', bonus: 15 }, staggered: { name: 'Staggered', bonus: 30 } };
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-  const getItem = id => catalog.find(item => item.id === id);
+  const getItem = id => catalog.find(item => item.id === (typeof id === 'string' ? id.replace(/^(rope|leather|steel)-legs$/, '$1-lower-leg') : id));
   const methodsFor = item => ({ Rope: ['knot', 'cinch'], Leather: ['buckle', 'cinch', 'padlock'], Steel: ['latch', 'padlock', 'double'] }[item.material] || []).map(id => [id, methods[id]]);
   function sanitize(entries) {
     const result = [], occupied = new Set();
@@ -43,7 +89,7 @@ const RestraintSystem = (() => {
     if (Array.isArray(character?.restraints)) return sanitize(character.restraints);
     const old = character?.restraint;
     const ids = old === 'Stasis' ? ['steel-wrists', 'steel-ankles', 'steel-arms', 'steel-legs'] : old === 'Wrist lock' ? ['steel-wrists'] : old === 'Ankle lock' ? ['steel-ankles'] : [];
-    return ids.map(itemId => ({ itemId, methodId: 'latch' }));
+    return sanitize(ids.map(itemId => ({ itemId, methodId: 'latch' })));
   }
   function profile(itemId, methodId) {
     const item = getItem(itemId), method = methods[methodId];
@@ -64,21 +110,23 @@ const RestraintSystem = (() => {
   function applyChance(actor, itemId, methodId, condition = 'alert') {
     const current = profile(itemId, methodId);
     if (!current || !conditions[condition]) return 0;
-    return clamp(Math.round(100 - current.difficulty + conditions[condition].bonus - penalties(actor).dexterity * 0.4), 5, 95);
+    const penalty = penalties(actor);
+    return clamp(Math.round(100 - current.difficulty + conditions[condition].bonus - penalty.dexterity * 0.4 - penalty.focus * 0.2), 5, 95);
   }
   function escapeChance(target, entry) {
     const current = profile(entry.itemId, entry.methodId);
     if (!current) return 0;
-    return clamp(Math.round(100 - current.escape - penalties(target).dexterity * 0.25), 5, 90);
+    const penalty = penalties(target);
+    return clamp(Math.round(100 - current.escape - penalty.dexterity * 0.25 - penalty.focus * 0.15), 5, 90);
   }
   function attemptApply({ target, actor, itemId, methodId, condition = 'alert', ap }, random = Math.random) {
     const current = profile(itemId, methodId);
     if (!current || !conditions[condition]) return { accepted: false, reason: 'Choose a valid restraint and securing method.' };
     const entries = sanitize(target.restraints);
-    if (entries.some(entry => getItem(entry.itemId).slot === current.item.slot)) return { accepted: false, reason: `Release the existing ${current.item.slot} restraint first.` };
+    if (entries.some(entry => getItem(entry.itemId).slot === current.item.slot)) return { accepted: false, reason: `Release the existing ${getSlot(current.item.slot).label.toLowerCase()} restraint first.` };
     if (!Number.isFinite(ap) || ap < current.cost) return { accepted: false, reason: 'Not enough action points. Refill the trial budget.' };
     const chance = applyChance(actor, itemId, methodId, condition), roll = Math.floor(random() * 100) + 1, success = roll <= chance;
-    return { accepted: true, success, roll, chance, ap: ap - current.cost, restraints: success ? [...entries, { itemId, methodId }] : entries };
+    return { accepted: true, success, roll, chance, ap: ap - current.cost, restraints: success ? [...entries, { itemId: current.item.id, methodId }] : entries };
   }
   function attemptEscape({ target, itemId, ap }, random = Math.random) {
     const entries = sanitize(target.restraints), entry = entries.find(value => value.itemId === itemId);
@@ -87,6 +135,6 @@ const RestraintSystem = (() => {
     const chance = escapeChance(target, entry), roll = Math.floor(random() * 100) + 1, success = roll <= chance;
     return { accepted: true, success, roll, chance, ap: ap - 2, restraints: success ? entries.filter(value => value.itemId !== itemId) : entries };
   }
-  return { materials, slots, attributes, methods, catalog, conditions, getItem, methodsFor, sanitize, migrate, profile, penalties, applyChance, escapeChance, attemptApply, attemptEscape };
+  return { materials, slots, slotDefinitions, regions, getSlot, attributes, methods, catalog, conditions, getItem, methodsFor, sanitize, migrate, profile, penalties, applyChance, escapeChance, attemptApply, attemptEscape };
 })();
 if (typeof module !== 'undefined') module.exports = RestraintSystem;
